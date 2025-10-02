@@ -75,6 +75,12 @@ class User:
         return self._oidc_claims.get("email", "")
 
     @property
+    def email_domain(self) -> str:
+        if self.email:
+            return self.email.split("@")[-1]
+        return ""
+
+    @property
     def email_verified(self) -> bool:
         """Whether the user's email has been verified"""
         verified = self._oidc_claims.get("email_verified", "false")
