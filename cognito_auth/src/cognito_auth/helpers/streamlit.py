@@ -1,18 +1,16 @@
-from typing import Optional
-
 import streamlit as st
 
-from cognito_user import User
+from cognito_auth import User
 
 from ..authorizer import Authorizer, DomainRule, EmailRule, GroupRule
 
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: Optional[list[str]] = None,
-    allowed_groups: Optional[list[str]] = None,
-    allowed_emails: Optional[list[str]] = None,
-    require_all: Optional[bool] = False,
+    allowed_domains: list[str] | None = None,
+    allowed_groups: list[str] | None = None,
+    allowed_emails: list[str] | None = None,
+    require_all: bool | None = False,
     region: str = "eu-west-2",
 ) -> User:
     """
@@ -79,7 +77,7 @@ def require_auth(
 
         return user
 
-    except Exception as e:
+    except Exception:
         st.warning("🔒 Authorization failed. Please log in.")
         redirect(redirect_url)
         st.stop()

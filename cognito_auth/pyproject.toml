@@ -7,7 +7,10 @@ authors = [
     { name = "David Gillespie", email = "david.gillespie@digital.cabinet-office.gov.uk" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "python-jose>=3.5.0",
+    "requests>=2.32.5",
+]
 
 [project.scripts]
 cognito-auth = "cognito_auth:main"
@@ -15,3 +18,34 @@ cognito-auth = "cognito_auth:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.13.3",
+]
+
+
+[tool.ruff]
+# Target Python version (e.g., Python 3.10)
+target-version = "py313" 
+
+# Enable specific rule sets by their prefix
+# E (Pycodestyle errors), F (Pyflakes), I (isort), B (Bugbear), UP (Pyupgrade), etc.
+select = ["E", "F", "I", "B", "UP", "N", "A", "PT"] 
+
+# Disable specific rules you don't want (e.g., line length E501)
+ignore = ["E501"] 
+
+# Exclude files or directories
+exclude = [
+    ".git",
+    "__pypackages__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".venv",
+    "venv",
+]
+
+# Configure the 'isort' rule set (I)
+[tool.ruff.isort]
+force-single-line = false

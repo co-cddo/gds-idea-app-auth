@@ -2,12 +2,12 @@
 Unified authentication guard for Streamlit, Dash, FastAPI, and Gradio apps.
 """
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional
 
-from cognito_authorizer import Authorizer
+from cognito_user import User
 
-from .cognito_user import User
+from .authorizer import Authorizer
 
 
 class AuthGuard:
@@ -29,10 +29,10 @@ class AuthGuard:
 
     def __init__(
         self,
-        authorizer: Optional[Authorizer] = None,
-        allowed_domains: Optional[list[str]] = None,
-        allowed_groups: Optional[list[str]] = None,
-        allowed_users: Optional[list[str]] = None,
+        authorizer: Authorizer | None = None,
+        allowed_domains: list[str] | None = None,
+        allowed_groups: list[str] | None = None,
+        allowed_users: list[str] | None = None,
         redirect_url: str = "https://gds-idea.click/401.html",
         region: str = "eu-west-2",
         require_all: bool = False,
@@ -131,7 +131,7 @@ class AuthGuard:
 
             return user
 
-        except Exception as e:
+        except Exception:
             st.markdown(
                 f'<meta http-equiv="refresh" content="0; url={self.redirect_url}">',
                 unsafe_allow_html=True,
@@ -187,7 +187,7 @@ class AuthGuard:
 
         return wrapper
 
-    def get_current_user_dash(self) -> Optional[User]:
+    def get_current_user_dash(self) -> User | None:
         """Get current user in Dash callback."""
         from flask import request
 
@@ -246,7 +246,7 @@ class AuthGuard:
         return auth_dependency
 
     # ===== GRADIO =====
-    def get_current_user_gradio(self, request) -> Optional[User]:
+    def get_current_user_gradio(self, request) -> User | None:
         """
         Get current user in Gradio function.
 

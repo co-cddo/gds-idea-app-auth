@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from jose import jwt
 
@@ -14,8 +14,8 @@ class User:
 
     def __init__(
         self,
-        oidc_data_header: Optional[str],
-        access_token_header: Optional[str],
+        oidc_data_header: str | None,
+        access_token_header: str | None,
         region: str,
         verify_tokens: bool = True,
     ):
@@ -87,7 +87,7 @@ class User:
         return verified == "true" or verified is True
 
     @property
-    def exp(self) -> Optional[datetime]:
+    def exp(self) -> datetime | None:
         """Token expiration time"""
         exp_timestamp = self._oidc_claims.get("exp")
         if exp_timestamp:

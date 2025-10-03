@@ -2,22 +2,19 @@
 Simple authentication and authorization helper for FastAPI/Gradio apps.
 """
 
-from functools import wraps
-from typing import Callable, Optional
-
-from cognito_authorizer import Authorizer
 from fastapi import HTTPException, Request
-from fastapi.responses import RedirectResponse
 
-from cognito_user import User
+from cognito_auth import User
+
+from ..authorizer import Authorizer
 
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: Optional[list[str]] = None,
-    allowed_groups: Optional[list[str]] = None,
-    allowed_users: Optional[list[str]] = None,
-    authorizer: Optional[Authorizer] = None,
+    allowed_domains: list[str] | None = None,
+    allowed_groups: list[str] | None = None,
+    allowed_users: list[str] | None = None,
+    authorizer: Authorizer | None = None,
     region: str = "eu-west-2",
     require_all: bool = False,
 ):
@@ -154,17 +151,17 @@ def require_auth(
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             raise HTTPException(status_code=401, detail="Authentication failed")
 
     return auth_dependency
 
 
 def get_auth_dependency(
-    allowed_domains: Optional[list[str]] = None,
-    allowed_groups: Optional[list[str]] = None,
-    allowed_users: Optional[list[str]] = None,
-    authorizer: Optional[Authorizer] = None,
+    allowed_domains: list[str] | None = None,
+    allowed_groups: list[str] | None = None,
+    allowed_users: list[str] | None = None,
+    authorizer: Authorizer | None = None,
     region: str = "eu-west-2",
     require_all: bool = False,
 ):
@@ -183,7 +180,7 @@ def get_auth_dependency(
     )
 
 
-def get_current_user(request: Request, region: str = "eu-west-2") -> Optional[User]:
+def get_current_user(request: Request, region: str = "eu-west-2") -> User | None:
     """
     Get the current authenticated user from request headers.
     Works with both FastAPI Request and Gradio Request objects.
@@ -223,7 +220,7 @@ def get_current_user(request: Request, region: str = "eu-west-2") -> Optional[Us
 
 async def get_user_from_request(
     request: Request, region: str = "eu-west-2"
-) -> Optional[User]:
+) -> User | None:
     """
     Async version of get_current_user for FastAPI middleware.
 

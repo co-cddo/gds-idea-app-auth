@@ -2,21 +2,22 @@
 Simple authentication and authorization helper for Dash apps.
 """
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional
 
 from flask import redirect, request
 
-from .cognito_authorizer import Authorizer
-from .cognito_user import User
+from cognito_auth import User
+
+from ..authorizer import Authorizer
 
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: Optional[list[str]] = None,
-    allowed_groups: Optional[list[str]] = None,
-    allowed_users: Optional[list[str]] = None,
-    authorizer: Optional[Authorizer] = None,
+    allowed_domains: list[str] | None = None,
+    allowed_groups: list[str] | None = None,
+    allowed_users: list[str] | None = None,
+    authorizer: Authorizer | None = None,
     region: str = "eu-west-2",
     require_all: bool = False,
 ):
@@ -96,7 +97,7 @@ def require_auth(
                 # All checks passed - execute the function
                 return func(*args, **kwargs)
 
-            except Exception as e:
+            except Exception:
                 # Auth failed - redirect
                 return redirect(redirect_url)
 
@@ -105,7 +106,7 @@ def require_auth(
     return decorator
 
 
-def get_current_user(region: str = "eu-west-2") -> Optional[User]:
+def get_current_user(region: str = "eu-west-2") -> User | None:
     """
     Get the current authenticated user from request headers.
 
