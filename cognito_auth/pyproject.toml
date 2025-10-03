@@ -1,0 +1,17 @@
+[project]
+name = "cognito-auth"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "David Gillespie", email = "david.gillespie@digital.cabinet-office.gov.uk" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+cognito-auth = "cognito_auth:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
