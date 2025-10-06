@@ -22,25 +22,13 @@ class GroupRule:
         return bool(user_groups & self.allowed_groups)
 
 
-class DomainRule:
-    """Allow users with specific email domains"""
-
-    def __init__(self, allowed_domains: set[str]):
-        self.allowed_domains = allowed_domains
-
-    def is_allowed(self, user: User) -> bool:
-        print(f"Checking {user.email_domain} in {self.allowed_domains}")
-        return user.email_domain in self.allowed_domains
-
-
 class EmailRule:
-    """Allow specific users by username or sub"""
+    """Allow specific users by email address"""
 
     def __init__(self, allowed_emails: set[str]):
         self.allowed_emails = allowed_emails
 
     def is_allowed(self, user: User) -> bool:
-        print(f"Checking {user.email} in {self.allowed_emails}")
         return user.email in self.allowed_emails
 
 
@@ -59,7 +47,6 @@ class Authorizer:
     def is_authorized(self, user: User) -> bool:
         """Check if user is authorized"""
         if not user.is_authenticated:
-            print(f"{user.name} is not authenticated")
             return False
 
         if not self.rules:
@@ -71,3 +58,31 @@ class Authorizer:
             return all(results)
         else:
             return any(results)
+
+    @classmethod
+    def from_lists(
+        cls,
+        allowed_groups: list[str] | None = None,
+        allowed_users: list[str] | None = None,
+        require_all: bool = False,
+    ) -> "Authorizer":
+        """
+        Create an Authorizer from simple lists of allowed values.
+
+        Args:
+            allowed_groups: List of allowed Cognito groups
+            allowed_users: List of allowed email addresses
+            require_all: If True, ALL rules must pass. If False, ANY rule passes.
+
+        Returns:
+            Authorizer instance with the specified rules
+        """
+        rules: list[AuthorizationRule] = []
+
+        if allowed_groups:
+            rules.append(GroupRule(set(allowed_groups)))
+
+        if allowed_users:
+            rules.append(EmailRule(set(allowed_users)))
+
+        return cls(rules, require_all=require_all)

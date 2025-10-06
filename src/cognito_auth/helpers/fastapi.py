@@ -11,7 +11,6 @@ from ..authorizer import Authorizer
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: list[str] | None = None,
     allowed_groups: list[str] | None = None,
     allowed_users: list[str] | None = None,
     authorizer: Authorizer | None = None,
@@ -25,9 +24,8 @@ def require_auth(
 
     Args:
         redirect_url: Where to redirect on auth failure
-        allowed_domains: List of allowed email domains (e.g., ['company.com'])
         allowed_groups: List of allowed Cognito groups (e.g., ['admins'])
-        allowed_users: List of allowed usernames or subs
+        allowed_users: List of allowed email addresses
         authorizer: Pre-configured Authorizer instance (overrides other auth params)
         region: AWS region
         require_all: If True, ALL rules must pass. If False, ANY rule can pass.
@@ -41,7 +39,7 @@ def require_auth(
         from fastapi_gradio_auth import require_auth, get_auth_dependency
 
         app = FastAPI()
-        auth = get_auth_dependency(allowed_domains=['company.com'])
+        auth = get_auth_dependency(allowed_groups=['developers'])
 
         @app.get("/")
         def read_root(user: User = Depends(auth)):
@@ -59,7 +57,7 @@ def require_auth(
         from fastapi import FastAPI, Depends
 
         app = FastAPI()
-        auth = get_auth_dependency(allowed_domains=['company.com'])
+        auth = get_auth_dependency(allowed_groups=['developers'])
 
         def greet(name, request: gr.Request):
             # Access user from request
@@ -75,7 +73,7 @@ def require_auth(
                 user = await get_user_from_request(request)
                 if user and user.is_authenticated:
                     # Check authorization
-                    auth_check = get_auth_dependency(allowed_domains=['company.com'])
+                    auth_check = get_auth_dependency(allowed_groups=['developers'])
                     auth_check(request)
                     # Store user in request state
                     request.state.user = user
@@ -129,9 +127,8 @@ def require_auth(
             return demo
     """
     # Build authorizer if not provided
-    if authorizer is None and any([allowed_domains, allowed_groups, allowed_users]):
+    if authorizer is None and any([allowed_groups, allowed_users]):
         authorizer = Authorizer.from_lists(
-            allowed_domains=allowed_domains,
             allowed_groups=allowed_groups,
             allowed_users=allowed_users,
             require_all=require_all,
@@ -167,7 +164,6 @@ def require_auth(
 
 
 def get_auth_dependency(
-    allowed_domains: list[str] | None = None,
     allowed_groups: list[str] | None = None,
     allowed_users: list[str] | None = None,
     authorizer: Authorizer | None = None,
@@ -180,7 +176,6 @@ def get_auth_dependency(
     Returns a dependency function that can be used with Depends().
     """
     return require_auth(
-        allowed_domains=allowed_domains,
         allowed_groups=allowed_groups,
         allowed_users=allowed_users,
         authorizer=authorizer,

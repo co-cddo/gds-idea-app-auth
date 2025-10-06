@@ -49,10 +49,11 @@ Tests use pytest fixtures and mock User creation for isolation.
 
 3. **Authorizer** (`authorizer.py`)
    - Composable authorization rules system using Protocol pattern
-   - Built-in rules: `DomainRule`, `GroupRule`, `EmailRule`
+   - Built-in rules: `GroupRule`, `EmailRule`
    - `require_all=False` means ANY rule passes (OR logic)
    - `require_all=True` means ALL rules must pass (AND logic)
    - Can create custom rules by implementing `AuthorizationRule` protocol
+   - Note: Domain-based authorization is not needed as domains are used at signup to assign groups
 
 4. **AuthGuard** (`guard.py`)
    - Unified interface for protecting apps across frameworks
@@ -111,7 +112,7 @@ For local development without ALB/Cognito headers:
 
 3. **Use AuthGuard normally** - it will automatically use mock users when headers are missing:
    ```python
-   guard = AuthGuard(allowed_domains=['example.com'])
+   guard = AuthGuard(allowed_groups=['developers'])
    user = guard.streamlit()  # Returns mock user in dev mode
    ```
 
@@ -137,5 +138,5 @@ user = User.create_mock(
 
 - Requires Python 3.13+
 - AWS region defaults to `eu-west-2` but is configurable
-- Debug print statements exist in `authorizer.py` (lines 32, 43, 62) - should be removed for production
 - In real Cognito tokens, `username` is a UUID (same as `sub`), so `email` is the primary human-readable identifier
+- Authorization is group-based only - domains are handled at signup to assign users to appropriate groups

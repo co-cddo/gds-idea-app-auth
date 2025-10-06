@@ -2,12 +2,11 @@ import streamlit as st
 
 from cognito_auth import User
 
-from ..authorizer import Authorizer, DomainRule, EmailRule, GroupRule
+from ..authorizer import Authorizer, EmailRule, GroupRule
 
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: list[str] | None = None,
     allowed_groups: list[str] | None = None,
     allowed_emails: list[str] | None = None,
     require_all: bool | None = False,
@@ -21,20 +20,17 @@ def require_auth(
 
     Args:
         redirect_url: Where to redirect on auth failure
-        allowed_domains: List of allowed email domains (e.g., ['company.com'])
         allowed_groups: List of allowed Cognito groups (e.g., ['admins'])
-        allowed_emails: List of allowed emails
-        require_all: Pass one rule or all rule?
+        allowed_emails: List of allowed email addresses
+        require_all: If True, ALL rules must pass. If False, ANY rule passes.
         region: AWS region
 
     Returns:
         User object if authenticated and authorized
 
     Example:
-        user = require_auth(
-            allowed_domains=['company.com'], allowed_groups=['analysts']
-        )
-        st.write(f"Hello {user.username}!")
+        user = require_auth(allowed_groups=['analysts', 'developers'])
+        st.write(f"Hello {user.email}!")
     """
 
     def redirect(url):
@@ -62,8 +58,6 @@ def require_auth(
         rules = []
 
         # Use provided lists
-        if allowed_domains:
-            rules.append(DomainRule(set(allowed_domains)))
         if allowed_groups:
             rules.append(GroupRule(set(allowed_groups)))
         if allowed_emails:

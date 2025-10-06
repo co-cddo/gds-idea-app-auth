@@ -14,7 +14,6 @@ from ..authorizer import Authorizer
 
 def require_auth(
     redirect_url: str = "https://gds-idea.click/401.html",
-    allowed_domains: list[str] | None = None,
     allowed_groups: list[str] | None = None,
     allowed_users: list[str] | None = None,
     authorizer: Authorizer | None = None,
@@ -28,9 +27,8 @@ def require_auth(
 
     Args:
         redirect_url: Where to redirect on auth failure
-        allowed_domains: List of allowed email domains (e.g., ['company.com'])
         allowed_groups: List of allowed Cognito groups (e.g., ['admins'])
-        allowed_users: List of allowed usernames or subs
+        allowed_users: List of allowed email addresses
         authorizer: Pre-configured Authorizer instance (overrides other auth params)
         region: AWS region
         require_all: If True, ALL rules must pass. If False, ANY rule can pass.
@@ -42,7 +40,7 @@ def require_auth(
         # Protect entire app in server.py or app.py
         from dash_auth import require_auth
 
-        @require_auth(allowed_domains=['company.com'])
+        @require_auth(allowed_groups=['developers'])
         def create_app():
             app = dash.Dash(__name__)
             # ... build your app
@@ -65,9 +63,8 @@ def require_auth(
             ...
     """
     # Build authorizer if not provided
-    if authorizer is None and any([allowed_domains, allowed_groups, allowed_users]):
+    if authorizer is None and any([allowed_groups, allowed_users]):
         authorizer = Authorizer.from_lists(
-            allowed_domains=allowed_domains,
             allowed_groups=allowed_groups,
             allowed_users=allowed_users,
             require_all=require_all,

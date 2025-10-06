@@ -18,25 +18,27 @@ class AuthGuard:
     Create one AuthGuard instance and use it across your entire app.
 
     Examples:
-        # Example 1: Simple domain check
-        guard = AuthGuard(allowed_domains=['company.com'])
+        # Example 1: Allow specific groups
+        guard = AuthGuard(allowed_groups=['developers', 'admins'])
 
-        # Example 2: From S3 config
+        # Example 2: Allow specific users
+        guard = AuthGuard(allowed_users=['user@example.com'])
+
+        # Example 3: From S3 config
         guard = AuthGuard.from_s3('my-bucket', 'permissions.json')
 
-        # Example 3: From Streamlit secrets
+        # Example 4: From Streamlit secrets
         guard = AuthGuard.from_secrets()
 
-        # Example 4: Development mode (no real auth headers needed)
+        # Example 5: Development mode (no real auth headers needed)
         # Set environment variable: COGNITO_AUTH_DEV_MODE=true
         # Then use guard normally - it will use mock users from .cognito-auth-dev.json
-        guard = AuthGuard(allowed_domains=['company.com'])
+        guard = AuthGuard(allowed_groups=['developers'])
     """
 
     def __init__(
         self,
         authorizer: Authorizer | None = None,
-        allowed_domains: list[str] | None = None,
         allowed_groups: list[str] | None = None,
         allowed_users: list[str] | None = None,
         redirect_url: str = "https://gds-idea.click/401.html",
@@ -48,9 +50,8 @@ class AuthGuard:
 
         Args:
             authorizer: Pre-configured Authorizer instance
-            allowed_domains: List of allowed email domains
             allowed_groups: List of allowed Cognito groups
-            allowed_users: List of allowed usernames or subs
+            allowed_users: List of allowed email addresses
             redirect_url: Where to redirect on auth failure
             region: AWS region
             require_all: If True, ALL rules must pass. If False, ANY rule passes.
@@ -74,9 +75,8 @@ class AuthGuard:
             )
 
         # Build authorizer if not provided
-        if authorizer is None and any([allowed_domains, allowed_groups, allowed_users]):
+        if authorizer is None and any([allowed_groups, allowed_users]):
             self.authorizer = Authorizer.from_lists(
-                allowed_domains=allowed_domains,
                 allowed_groups=allowed_groups,
                 allowed_users=allowed_users,
                 require_all=require_all,
