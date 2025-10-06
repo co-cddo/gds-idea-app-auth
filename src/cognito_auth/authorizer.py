@@ -1,6 +1,52 @@
-from typing import Protocol
+import json
+import os
+from pathlib import Path
+from typing import Any, Protocol
+
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .user import User
+
+
+class AuthConfig(BaseModel):
+    """Configuration for authorization rules."""
+
+    allowed_groups: list[str] | None = None
+    allowed_users: list[str] | None = None
+    require_all: bool = False
+
+    @field_validator("allowed_users")
+    @classmethod
+    def validate_emails(cls, v):
+        """Validate that all users are valid email addresses."""
+        if v is None:
+            return None
+
+        # Validate each email with Pydantic's EmailStr
+        for email in v:
+            try:
+                EmailStr._validate(email)
+            except ValidationError as e:
+                raise ValueError(
+                    f"Invalid email address '{email}': must be a valid email format"
+                ) from e
+
+        return v  # Already strings
+
+    @model_validator(mode="after")
+    def check_at_least_one_rule(self):
+        """Ensure at least one authorization rule is specified."""
+        if not self.allowed_groups and not self.allowed_users:
+            raise ValueError(
+                "Config must specify at least one of: allowed_groups, allowed_users"
+            )
+        return self
 
 
 class AuthorizationRule(Protocol):
@@ -86,3 +132,92 @@ class Authorizer:
             rules.append(EmailRule(set(allowed_users)))
 
         return cls(rules, require_all=require_all)
+
+    @classmethod
+    def from_config(cls) -> "Authorizer":
+        """
+        Create an Authorizer from configuration.
+
+        Requires one of these environment variables:
+        - COGNITO_AUTH_CONFIG_PATH: Path to local JSON file (development)
+        - COGNITO_AUTH_SECRET_NAME: AWS Secrets Manager secret name (production)
+
+        Config format (JSON):
+        {
+            "allowed_groups": ["developers", "admins"],
+            "allowed_users": ["user@example.com"],
+            "require_all": false
+        }
+
+        Returns:
+            Authorizer instance configured from the loaded settings
+
+        Raises:
+            ValueError: If neither environment variable is set or config is invalid
+
+        Example:
+            # Development
+            export COGNITO_AUTH_CONFIG_PATH=./auth-config.json
+            authorizer = Authorizer.from_config()
+
+            # Production
+            export COGNITO_AUTH_SECRET_NAME=my-app/auth-config
+            authorizer = Authorizer.from_config()
+        """
+        config_path = os.getenv("COGNITO_AUTH_CONFIG_PATH")
+        secret_name = os.getenv("COGNITO_AUTH_SECRET_NAME")
+
+        if config_path:
+            # Development: load from local file
+            raw_config = cls._load_from_file(config_path)
+        elif secret_name:
+            # Production: load from AWS Secrets Manager
+            raw_config = cls._load_from_aws_secrets(secret_name)
+        else:
+            raise ValueError(
+                "Must set either COGNITO_AUTH_CONFIG_PATH (for local file) "
+                "or COGNITO_AUTH_SECRET_NAME (for AWS Secrets Manager)"
+            )
+
+        # Parse and validate with pydantic
+        config = AuthConfig.model_validate(raw_config)
+
+        return cls.from_lists(
+            allowed_groups=config.allowed_groups,
+            allowed_users=config.allowed_users,
+            require_all=config.require_all,
+        )
+
+    @staticmethod
+    def _load_from_file(file_path: str) -> dict[str, Any]:
+        """Load configuration from a local JSON file."""
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Config file not found: {file_path}")
+
+        try:
+            with path.open() as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in config file {file_path}: {e}") from e
+
+    @staticmethod
+    def _load_from_aws_secrets(secret_name: str) -> dict[str, Any]:
+        """Load configuration from AWS Secrets Manager."""
+        try:
+            import boto3
+        except ImportError as e:
+            raise ImportError(
+                "boto3 is required for AWS Secrets Manager. "
+                "Install with: pip install boto3"
+            ) from e
+
+        try:
+            client = boto3.client("secretsmanager")
+            response = client.get_secret_value(SecretId=secret_name)
+            return json.loads(response["SecretString"])
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to load config from AWS Secrets Manager "
+                f"(secret: {secret_name}): {e}"
+            ) from e

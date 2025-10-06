@@ -90,6 +90,65 @@ src/cognito_auth/
 └── helpers/             # Framework-specific helper utilities (empty currently)
 ```
 
+## Configuration Management
+
+The package supports seamless configuration loading for dev and production environments.
+
+### Using from_config()
+
+**Same code works in both environments:**
+```python
+from cognito_auth import AuthGuard
+
+# Works in development AND production
+guard = AuthGuard.from_config()
+user = guard.streamlit()
+```
+
+### Configuration File Format
+
+JSON structure for authorization rules:
+```json
+{
+  "allowed_groups": ["developers", "admins", "users"],
+  "allowed_users": ["special-user@example.com"],
+  "require_all": false
+}
+```
+
+See `auth-config.json.example` for a template.
+
+### Environment Variables
+
+Requires **one** of these:
+
+**Development (local file):**
+```bash
+export COGNITO_AUTH_CONFIG_PATH=./auth-config.json
+```
+
+**Production (AWS Secrets Manager):**
+```bash
+export COGNITO_AUTH_SECRET_NAME=my-app/auth-config
+```
+
+### Validation
+
+Config validation with Pydantic ensures:
+- Email addresses are valid format
+- At least one of `allowed_groups` or `allowed_users` is specified
+- `require_all` is boolean
+- Clear error messages for invalid configs
+
+### Testing Config Loading
+
+Tests located in `tests/cognito_auth/test_authorizer.py` cover:
+- Loading from local files
+- Loading from AWS Secrets (mocked)
+- Email validation
+- Invalid JSON handling
+- Missing environment variables
+
 ## Development Mode (Local Development)
 
 For local development without ALB/Cognito headers:

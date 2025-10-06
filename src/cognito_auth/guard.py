@@ -85,21 +85,30 @@ class AuthGuard:
             self.authorizer = authorizer
 
     @classmethod
-    def from_s3(cls, bucket: str, key: str, **kwargs):
-        """Create guard with authorizer from S3."""
-        authorizer = Authorizer.from_s3(bucket, key)
-        return cls(authorizer=authorizer, **kwargs)
+    def from_config(cls, **kwargs) -> "AuthGuard":
+        """
+        Create an AuthGuard with authorization from configuration.
 
-    @classmethod
-    def from_secrets(cls, **kwargs):
-        """Create guard with authorizer from Streamlit secrets."""
-        authorizer = Authorizer.from_secrets()
-        return cls(authorizer=authorizer, **kwargs)
+        Loads config automatically from local file or AWS Secrets Manager
+        based on environment variables. See Authorizer.from_config() for details.
 
-    @classmethod
-    def from_parameter_store(cls, parameter_prefix: str, **kwargs):
-        """Create guard with authorizer from AWS Parameter Store."""
-        authorizer = Authorizer.from_parameter_store(parameter_prefix)
+        Requires one of these environment variables:
+        - COGNITO_AUTH_CONFIG_PATH: Path to local JSON file (development)
+        - COGNITO_AUTH_SECRET_NAME: AWS Secrets Manager secret name (production)
+
+        Args:
+            **kwargs: Additional arguments passed to AuthGuard __init__
+                     (redirect_url, region, etc.)
+
+        Returns:
+            AuthGuard instance with configured authorization
+
+        Example:
+            # Same code works in dev and production
+            guard = AuthGuard.from_config()
+            user = guard.streamlit()
+        """
+        authorizer = Authorizer.from_config()
         return cls(authorizer=authorizer, **kwargs)
 
     def _get_user_from_headers(self, headers: dict) -> User:

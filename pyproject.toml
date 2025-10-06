@@ -10,6 +10,8 @@ requires-python = ">=3.13"
 dependencies = [
     "python-jose>=3.5.0",
     "requests>=2.32.5",
+    "boto3>=1.35.0",
+    "pydantic[email]>=2.0.0",
 ]
 
 [project.scripts]
