@@ -31,7 +31,9 @@ def require_auth(
         User object if authenticated and authorized
 
     Example:
-        user = require_auth(allowed_domains=['company.com'], allowed_groups=['analysts'])
+        user = require_auth(
+            allowed_domains=['company.com'], allowed_groups=['analysts']
+        )
         st.write(f"Hello {user.username}!")
     """
 

@@ -48,7 +48,9 @@ def require_auth(
             return {"message": f"Hello {user.email}!"}
 
         @app.get("/admin")
-        def admin_page(user: User = Depends(get_auth_dependency(allowed_groups=['admins']))):
+        def admin_page(
+            user: User = Depends(get_auth_dependency(allowed_groups=["admins"]))
+        ):
             return {"message": f"Admin access for {user.username}"}
 
 
@@ -95,7 +97,9 @@ def require_auth(
                 # Get user from Cognito headers
                 user = get_current_user(request)
                 if user:
-                    return f"Hello {user.email}! You said: {text}\\n\\nYour groups: {', '.join(user.groups) if user.groups else 'None'}"
+                    groups = ", ".join(user.groups) if user.groups else "None"
+                    msg = f"Hello {user.email}! You said: {text}"
+                    return f"{msg}\\n\\nYour groups: {groups}"
                 return "Not authenticated"
 
             with gr.Blocks() as demo:
@@ -111,8 +115,13 @@ def require_auth(
                 submit_btn.click(process_input, inputs=[text_input], outputs=output)
 
                 # Display user info on load
+                def show_user_info(request):
+                    user = get_current_user(request)
+                    groups = ", ".join(user.groups) if user.groups else "None"
+                    return f"**Logged in as:** {user.email}\\n**Groups:** {groups}"
+
                 demo.load(
-                    lambda request: f"**Logged in as:** {get_current_user(request).email}\\n**Groups:** {', '.join(get_current_user(request).groups) if get_current_user(request).groups else 'None'}",
+                    show_user_info,
                     inputs=None,
                     outputs=user_info
                 )
@@ -151,8 +160,8 @@ def require_auth(
 
         except HTTPException:
             raise
-        except Exception:
-            raise HTTPException(status_code=401, detail="Authentication failed")
+        except Exception as e:
+            raise HTTPException(status_code=401, detail="Authentication failed") from e
 
     return auth_dependency
 

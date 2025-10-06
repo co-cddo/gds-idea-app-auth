@@ -2,12 +2,13 @@
 Unified authentication guard for Streamlit, Dash, FastAPI, and Gradio apps.
 """
 
+import os
+import warnings
 from collections.abc import Callable
 from functools import wraps
 
-from cognito_user import User
-
 from .authorizer import Authorizer
+from .user import User
 
 
 class AuthGuard:
@@ -25,6 +26,11 @@ class AuthGuard:
 
         # Example 3: From Streamlit secrets
         guard = AuthGuard.from_secrets()
+
+        # Example 4: Development mode (no real auth headers needed)
+        # Set environment variable: COGNITO_AUTH_DEV_MODE=true
+        # Then use guard normally - it will use mock users from .cognito-auth-dev.json
+        guard = AuthGuard(allowed_domains=['company.com'])
     """
 
     def __init__(
@@ -51,6 +57,21 @@ class AuthGuard:
         """
         self.redirect_url = redirect_url
         self.region = region
+
+        # Check for dev mode from environment variable
+        self.dev_mode = os.getenv("COGNITO_AUTH_DEV_MODE", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+
+        if self.dev_mode:
+            warnings.warn(
+                "COGNITO_AUTH_DEV_MODE is enabled. Authentication is bypassed and mock "
+                "users will be used. This should NEVER be enabled in production.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Build authorizer if not provided
         if authorizer is None and any([allowed_domains, allowed_groups, allowed_users]):
@@ -83,11 +104,20 @@ class AuthGuard:
 
     def _get_user_from_headers(self, headers: dict) -> User:
         """Extract and validate user from Cognito headers."""
+        oidc_header = headers.get("X-Amzn-Oidc-Data") or headers.get(
+            "x-amzn-oidc-data"
+        )
+        access_header = headers.get("X-Amzn-Oidc-Accesstoken") or headers.get(
+            "x-amzn-oidc-accesstoken"
+        )
+
+        # In dev mode, if headers are missing, return a mock user
+        if self.dev_mode and (not oidc_header or not access_header):
+            return User.create_mock(region=self.region)
+
         return User(
-            oidc_data_header=headers.get("X-Amzn-Oidc-Data")
-            or headers.get("x-amzn-oidc-data"),
-            access_token_header=headers.get("X-Amzn-Oidc-Accesstoken")
-            or headers.get("x-amzn-oidc-accesstoken"),
+            oidc_data_header=oidc_header,
+            access_token_header=access_header,
             region=self.region,
             verify_tokens=True,
         )
@@ -240,8 +270,10 @@ class AuthGuard:
 
             except HTTPException:
                 raise
-            except Exception:
-                raise HTTPException(status_code=401, detail="Authentication failed")
+            except Exception as e:
+                raise HTTPException(
+                    status_code=401, detail="Authentication failed"
+                ) from e
 
         return auth_dependency
 
@@ -260,7 +292,8 @@ class AuthGuard:
                 user = guard.get_current_user_gradio(request)
                 if not user:
                     return "Not authenticated"
-                return f"Hello {user.email}! You said: {text}\\n\\nGroups: {', '.join(user.groups) if user.groups else 'None'}"
+                groups = ', '.join(user.groups) if user.groups else 'None'
+                return f"Hello {user.email}! You said: {text}\\n\\nGroups: {groups}"
 
             with gr.Blocks() as demo:
                 gr.Markdown("# Protected App")
