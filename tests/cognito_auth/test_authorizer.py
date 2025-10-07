@@ -55,13 +55,13 @@ def mock_user_no_groups(suppress_warnings):
 
 
 def test_group_rule_allows_user_in_group(mock_user):
-    """User in allowed group is authorized"""
+    """User in allowed group is authorised"""
     rule = GroupRule({"developers"})
     assert rule.is_allowed(mock_user) is True
 
 
 def test_group_rule_allows_user_with_multiple_groups(mock_user):
-    """User with one of multiple allowed groups is authorized"""
+    """User with one of multiple allowed groups is authorised"""
     rule = GroupRule({"developers", "admins"})
     assert rule.is_allowed(mock_user) is True
 
@@ -88,13 +88,13 @@ def test_group_rule_with_empty_allowed_groups(mock_user):
 
 
 def test_email_rule_allows_matching_email(mock_user):
-    """User with matching email is authorized"""
+    """User with matching email is authorised"""
     rule = EmailRule({"test@example.com"})
     assert rule.is_allowed(mock_user) is True
 
 
 def test_email_rule_allows_user_in_list(mock_user):
-    """User with email in list is authorized"""
+    """User with email in list is authorised"""
     rule = EmailRule({"test@example.com", "other@example.com"})
     assert rule.is_allowed(mock_user) is True
 
@@ -118,28 +118,28 @@ def test_authorizer_with_single_group_rule_allows(mock_user):
     """Authorizer with group rule allows matching user"""
     rule = GroupRule({"developers"})
     authorizer = Authorizer([rule])
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_authorizer_with_single_group_rule_denies(mock_user):
     """Authorizer with group rule denies non-matching user"""
     rule = GroupRule({"admins"})
     authorizer = Authorizer([rule])
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 def test_authorizer_with_single_email_rule_allows(mock_user):
     """Authorizer with email rule allows matching user"""
     rule = EmailRule({"test@example.com"})
     authorizer = Authorizer([rule])
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_authorizer_with_single_email_rule_denies(mock_user):
     """Authorizer with email rule denies non-matching user"""
     rule = EmailRule({"other@example.com"})
     authorizer = Authorizer([rule])
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 # Tests for Authorizer with multiple rules (OR logic)
@@ -152,7 +152,7 @@ def test_authorizer_or_logic_allows_when_one_rule_passes(mock_user):
         EmailRule({"test@example.com"}),  # Matches
     ]
     authorizer = Authorizer(rules, require_all=False)
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_authorizer_or_logic_denies_when_no_rules_pass(mock_user):
@@ -162,7 +162,7 @@ def test_authorizer_or_logic_denies_when_no_rules_pass(mock_user):
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
     authorizer = Authorizer(rules, require_all=False)
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 def test_authorizer_or_logic_allows_when_all_rules_pass(mock_user):
@@ -172,7 +172,7 @@ def test_authorizer_or_logic_allows_when_all_rules_pass(mock_user):
         EmailRule({"test@example.com"}),  # Matches
     ]
     authorizer = Authorizer(rules, require_all=False)
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 # Tests for Authorizer with multiple rules (AND logic)
@@ -185,7 +185,7 @@ def test_authorizer_and_logic_allows_when_all_rules_pass(mock_user):
         EmailRule({"test@example.com"}),  # Matches
     ]
     authorizer = Authorizer(rules, require_all=True)
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_authorizer_and_logic_denies_when_one_rule_fails(mock_user):
@@ -195,7 +195,7 @@ def test_authorizer_and_logic_denies_when_one_rule_fails(mock_user):
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
     authorizer = Authorizer(rules, require_all=True)
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 def test_authorizer_and_logic_denies_when_all_rules_fail(mock_user):
@@ -205,7 +205,7 @@ def test_authorizer_and_logic_denies_when_all_rules_fail(mock_user):
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
     authorizer = Authorizer(rules, require_all=True)
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 # Tests for Authorizer with no rules
@@ -214,13 +214,13 @@ def test_authorizer_and_logic_denies_when_all_rules_fail(mock_user):
 def test_authorizer_with_no_rules_allows_authenticated_user(mock_user):
     """Authorizer with no rules allows any authenticated user"""
     authorizer = Authorizer([])
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_authorizer_with_empty_rules_allows(mock_user):
     """Empty rules list allows any authenticated user"""
     authorizer = Authorizer([], require_all=False)
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 # Tests for Authorizer.from_lists()
@@ -248,7 +248,7 @@ def test_from_lists_creates_authorizer_with_both(mock_user):
     )
     assert len(authorizer.rules) == 2
     # Should use OR logic by default
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
 
 
 def test_from_lists_respects_require_all_flag(mock_user):
@@ -259,7 +259,7 @@ def test_from_lists_respects_require_all_flag(mock_user):
         require_all=True,
     )
     # User is in developers group but email doesn't match
-    assert authorizer.is_authorized(mock_user) is False
+    assert authorizer.is_authorised(mock_user) is False
 
 
 def test_from_lists_with_no_params_creates_empty_authorizer():
@@ -290,9 +290,9 @@ def test_authorizer_allows_different_users_with_or_logic(
         require_all=False,
     )
     # mock_user matches group rule
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
     # mock_admin_user matches email rule
-    assert authorizer.is_authorized(mock_admin_user) is True
+    assert authorizer.is_authorised(mock_admin_user) is True
 
 
 def test_authorizer_requires_both_rules_with_and_logic(
@@ -305,9 +305,9 @@ def test_authorizer_requires_both_rules_with_and_logic(
         require_all=True,
     )
     # mock_user matches both rules
-    assert authorizer.is_authorized(mock_user) is True
+    assert authorizer.is_authorised(mock_user) is True
     # mock_admin_user only matches neither rule
-    assert authorizer.is_authorized(mock_admin_user) is False
+    assert authorizer.is_authorised(mock_admin_user) is False
 
 
 def test_authorizer_denies_unauthenticated_user(suppress_warnings):
@@ -317,14 +317,14 @@ def test_authorizer_denies_unauthenticated_user(suppress_warnings):
     user._is_authenticated = False
 
     authorizer = Authorizer.from_lists(allowed_groups=["developers"])
-    assert authorizer.is_authorized(user) is False
+    assert authorizer.is_authorised(user) is False
 
 
 # Tests for Authorizer.from_config()
 
 
 def test_from_config_loads_from_file(tmp_path):
-    """from_config loads authorization from local file"""
+    """from_config loads authorisation from local file"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(json.dumps({
         "allowed_groups": ["developers"],
@@ -353,7 +353,7 @@ def test_from_config_validates_emails(tmp_path):
 
 
 def test_from_config_requires_at_least_one_rule(tmp_path):
-    """from_config requires at least one authorization rule"""
+    """from_config requires at least one authorisation rule"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(json.dumps({"require_all": False}))
 

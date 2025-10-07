@@ -19,7 +19,7 @@ _config_cache = TTLCache(maxsize=1, ttl=300)
 
 
 class AuthConfig(BaseModel):
-    """Configuration for authorization rules."""
+    """Configuration for authorisation rules."""
 
     allowed_groups: list[str] | None = None
     allowed_users: list[str] | None = None
@@ -45,7 +45,7 @@ class AuthConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_at_least_one_rule(self):
-        """Ensure at least one authorization rule is specified."""
+        """Ensure at least one authorisation rule is specified."""
         if not self.allowed_groups and not self.allowed_users:
             raise ValueError(
                 "Config must specify at least one of: allowed_groups, allowed_users"
@@ -53,8 +53,8 @@ class AuthConfig(BaseModel):
         return self
 
 
-class AuthorizationRule(Protocol):
-    """Protocol for authorization rules"""
+class AuthorisationRule(Protocol):
+    """Protocol for authorisation rules"""
 
     def is_allowed(self, user: User) -> bool:
         """Check if user meets this rule"""
@@ -83,19 +83,19 @@ class EmailRule:
 
 
 class Authorizer:
-    """Handles authorization logic using composable rules"""
+    """Handles authorisation logic using composable rules"""
 
-    def __init__(self, rules: list[AuthorizationRule], require_all: bool = False):
+    def __init__(self, rules: list[AuthorisationRule], require_all: bool = False):
         """
         Args:
-            rules: List of authorization rules
+            rules: List of authorisation rules
             require_all: If True, ALL rules must pass. If False, ANY rule can pass.
         """
         self.rules = rules
         self.require_all = require_all
 
-    def is_authorized(self, user: User) -> bool:
-        """Check if user is authorized"""
+    def is_authorised(self, user: User) -> bool:
+        """Check if user is authorised"""
         if not user.is_authenticated:
             return False
 
@@ -127,7 +127,7 @@ class Authorizer:
         Returns:
             Authorizer instance with the specified rules
         """
-        rules: list[AuthorizationRule] = []
+        rules: list[AuthorisationRule] = []
 
         if allowed_groups:
             rules.append(GroupRule(set(allowed_groups)))

@@ -84,7 +84,7 @@ class GradioAuth(BaseAuth):
                     headers = dict(request.headers)
                     user = self.auth._get_user_from_headers(headers)
 
-                    if not self.auth._is_authorized(user):
+                    if not self.auth._is_authorised(user):
                         return RedirectResponse(url=self.auth.redirect_url)
 
                     # Store user in request state
@@ -99,7 +99,7 @@ class GradioAuth(BaseAuth):
 
     def get_auth_user(self, request: Request) -> User:
         """
-        Get the authenticated and authorized user for this request.
+        Get the authenticated and authorised user for this request.
 
         For standalone Gradio: Validates user from request headers.
         For Gradio + FastAPI with protect_app(): Retrieves pre-validated user.
@@ -108,10 +108,10 @@ class GradioAuth(BaseAuth):
             request: Gradio Request object (pass as parameter to your function)
 
         Returns:
-            Authenticated and authorized User
+            Authenticated and authorised User
 
         Raises:
-            PermissionError: If user is not authorized
+            PermissionError: If user is not authorised
             Exception: If authentication fails
 
         Example (Standalone):
@@ -134,7 +134,7 @@ class GradioAuth(BaseAuth):
         headers = dict(request.headers)
         user = self._get_user_from_headers(headers)
 
-        if not self._is_authorized(user):
+        if not self._is_authorised(user):
             raise PermissionError(
                 "Access denied. You don't have permission to access this resource."
             )

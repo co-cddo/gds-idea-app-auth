@@ -35,7 +35,7 @@ def my_callback(...):
 DashAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authorizer`** (optional): Pre-configured Authorizer instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Where to redirect unauthorized users (default: "https://gds-idea.click/401.html")
+- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.click/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
@@ -46,14 +46,14 @@ from cognito_auth.dash import DashAuth
 authorizer = Authorizer.from_lists(allowed_groups=["developers"])
 auth = DashAuth(
     authorizer=authorizer,
-    redirect_url="https://myapp.com/unauthorized",
+    redirect_url="https://myapp.com/unauthorised",
     region="us-east-1"
 )
 ```
 
 ## Behavior
 
-Since Dash runs on Flask, DashAuth uses Flask's request handling. When authentication or authorization fails:
+Since Dash runs on Flask, DashAuth uses Flask's request handling. When authentication or authorisation fails:
 
 - **With `protect_app()`**: Automatically redirects to `redirect_url` before any callback executes
 - **With `@require_auth` decorator**: Redirects to `redirect_url` for that specific route
@@ -84,13 +84,13 @@ To customize the mock user returned in dev mode, create a `dev-mock-user.json` f
 }
 ```
 
-The mock user will use these values instead of the defaults. This is useful for testing different authorization scenarios.
+The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
 
 **Available fields:**
 - `email` - Mock user's email address
 - `sub` - Mock user's Cognito subject (UUID)
 - `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorization testing
+- `groups` - Mock user's Cognito groups for authorisation testing
 
 See `dev-mock-user.example.json` in the repository for a complete template with comments.
 

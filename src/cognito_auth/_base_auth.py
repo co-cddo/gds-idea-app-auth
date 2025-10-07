@@ -99,8 +99,8 @@ class BaseAuth:
             verify_tokens=True,
         )
 
-    def _is_authorized(self, user: User) -> bool:
-        """Check if user passes authorization rules."""
-        if self.authorizer is not None and not self.authorizer.is_authorized(user):
+    def _is_authorised(self, user: User) -> bool:
+        """Check if user passes authorisation rules."""
+        if self.authorizer is not None and not self.authorizer.is_authorised(user):
             return False
         return True

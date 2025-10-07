@@ -46,13 +46,13 @@ auth = StreamlitAuth(
 
 ## Behavior
 
-Unlike other frameworks, Streamlit cannot redirect users. When authentication or authorization fails, `get_auth_user()`:
+Unlike other frameworks, Streamlit cannot redirect users. When authentication or authorisation fails, `get_auth_user()`:
 
 1. Displays an error message using `st.error()`
 2. Displays an info message using `st.info()`
 3. Stops execution using `st.stop()`
 
-This prevents any code after `get_auth_user()` from running for unauthorized users.
+This prevents any code after `get_auth_user()` from running for unauthorised users.
 
 ## Development Mode
 
@@ -77,13 +77,13 @@ To customize the mock user returned in dev mode, create a `dev-mock-user.json` f
 }
 ```
 
-The mock user will use these values instead of the defaults. This is useful for testing different authorization scenarios.
+The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
 
 **Available fields:**
 - `email` - Mock user's email address
 - `sub` - Mock user's Cognito subject (UUID)
 - `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorization testing
+- `groups` - Mock user's Cognito groups for authorisation testing
 
 See `dev-mock-user.example.json` in the repository for a complete template with comments.
 
@@ -107,7 +107,7 @@ auth = StreamlitAuth()
 # This line protects your entire app
 user = auth.get_auth_user()
 
-# Only authenticated and authorized users reach here
+# Only authenticated and authorised users reach here
 st.title("Protected Dashboard")
 st.write(f"Logged in as: {user.email}")
 

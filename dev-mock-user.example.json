@@ -17,6 +17,6 @@
     "email": "Mock user's email address",
     "sub": "Mock user's Cognito subject (UUID)",
     "username": "Mock user's username (usually same as sub)",
-    "groups": "Mock user's Cognito groups for authorization testing"
+    "groups": "Mock user's Cognito groups for authorisation testing"
   }
 }

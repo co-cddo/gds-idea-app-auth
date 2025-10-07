@@ -112,14 +112,14 @@ def test_get_auth_user_validates_on_demand_without_protect_app(tmp_path):
         with app.test_request_context(headers={"X-Amzn-Oidc-Data": "token"}):
             with (
                 patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-                patch.object(auth, "_is_authorized", return_value=True),
+                patch.object(auth, "_is_authorised", return_value=True),
             ):
                 user = auth.get_auth_user()
                 assert user == mock_user
 
 
-def test_get_auth_user_raises_permission_error_when_unauthorized(tmp_path):
-    """get_auth_user raises PermissionError when user not authorized"""
+def test_get_auth_user_raises_permission_error_when_unauthorised(tmp_path):
+    """get_auth_user raises PermissionError when user not authorised"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -138,7 +138,7 @@ def test_get_auth_user_raises_permission_error_when_unauthorized(tmp_path):
         with app.test_request_context(headers={"X-Amzn-Oidc-Data": "token"}):
             with (
                 patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-                patch.object(auth, "_is_authorized", return_value=False),
+                patch.object(auth, "_is_authorised", return_value=False),
             ):
                 with pytest.raises(PermissionError, match="Access denied"):
                     auth.get_auth_user()
@@ -147,8 +147,8 @@ def test_get_auth_user_raises_permission_error_when_unauthorized(tmp_path):
 # Tests for require_auth decorator
 
 
-def test_require_auth_decorator_allows_authorized_user(tmp_path):
-    """require_auth decorator allows authorized user through"""
+def test_require_auth_decorator_allows_authorised_user(tmp_path):
+    """require_auth decorator allows authorised user through"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -171,7 +171,7 @@ def test_require_auth_decorator_allows_authorized_user(tmp_path):
         with app.test_request_context(headers={"X-Amzn-Oidc-Data": "token"}):
             with (
                 patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-                patch.object(auth, "_is_authorized", return_value=True),
+                patch.object(auth, "_is_authorised", return_value=True),
             ):
                 result = protected_route()
                 assert result == "Success"
@@ -179,8 +179,8 @@ def test_require_auth_decorator_allows_authorized_user(tmp_path):
                 assert g.user == mock_user
 
 
-def test_require_auth_decorator_redirects_unauthorized_user(tmp_path):
-    """require_auth decorator redirects unauthorized user"""
+def test_require_auth_decorator_redirects_unauthorised_user(tmp_path):
+    """require_auth decorator redirects unauthorised user"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -203,7 +203,7 @@ def test_require_auth_decorator_redirects_unauthorized_user(tmp_path):
         with app.test_request_context(headers={"X-Amzn-Oidc-Data": "token"}):
             with (
                 patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-                patch.object(auth, "_is_authorized", return_value=False),
+                patch.object(auth, "_is_authorised", return_value=False),
             ):
                 response = protected_route()
                 # Should return a redirect response

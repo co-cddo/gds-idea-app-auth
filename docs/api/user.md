@@ -75,7 +75,7 @@ All user properties are read-only and extracted from the JWT tokens.
 - **`email`**: User's email address
 - **`email_domain`**: Domain portion of email (e.g., "example.com")
 
-### Authorization Properties
+### Authorisation Properties
 
 - **`groups`**: List of Cognito groups the user belongs to
 - **`is_admin`**: Whether user belongs to "gds-idea" admin group

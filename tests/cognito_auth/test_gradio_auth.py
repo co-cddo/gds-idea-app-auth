@@ -41,8 +41,8 @@ def test_protect_app_adds_middleware(tmp_path):
         assert len(app.user_middleware) > initial_middleware_count
 
 
-def test_protect_app_middleware_redirects_unauthorized_user(tmp_path):
-    """protect_app middleware redirects unauthorized users"""
+def test_protect_app_middleware_redirects_unauthorised_user(tmp_path):
+    """protect_app middleware redirects unauthorised users"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -64,7 +64,7 @@ def test_protect_app_middleware_redirects_unauthorized_user(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=False),
+            patch.object(auth, "_is_authorised", return_value=False),
         ):
             auth.protect_app(app)
             client = TestClient(app)
@@ -131,14 +131,14 @@ def test_get_auth_user_validates_on_demand_for_standalone_gradio(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             user = auth.get_auth_user(mock_request)
             assert user == mock_user
 
 
-def test_get_auth_user_raises_permission_error_when_unauthorized(tmp_path):
-    """get_auth_user raises PermissionError when user not authorized"""
+def test_get_auth_user_raises_permission_error_when_unauthorised(tmp_path):
+    """get_auth_user raises PermissionError when user not authorised"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -160,14 +160,14 @@ def test_get_auth_user_raises_permission_error_when_unauthorized(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=False),
+            patch.object(auth, "_is_authorised", return_value=False),
         ):
             with pytest.raises(PermissionError, match="Access denied"):
                 auth.get_auth_user(mock_request)
 
 
-def test_protect_app_allows_authorized_user(tmp_path):
-    """protect_app middleware allows authorized users through"""
+def test_protect_app_allows_authorised_user(tmp_path):
+    """protect_app middleware allows authorised users through"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -189,7 +189,7 @@ def test_protect_app_allows_authorized_user(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             auth.protect_app(app)
             client = TestClient(app)

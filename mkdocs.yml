@@ -82,4 +82,4 @@ nav:
       - Exceptions: api/exceptions.md
   - Advanced:
       - Development Mode: advanced/dev-mode.md
-      - Custom Authorization Rules: advanced/custom-rules.md
+      - Custom Authorisation Rules: advanced/custom-rules.md

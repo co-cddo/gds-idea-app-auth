@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`cognito-auth` is a Python package providing unified authentication and authorization for AWS Cognito-protected web applications. It supports multiple frameworks: Streamlit, Dash, FastAPI, and Gradio.
+`cognito-auth` is a Python package providing unified authentication and authorisation for AWS Cognito-protected web applications. It supports multiple frameworks: Streamlit, Dash, FastAPI, and Gradio.
 
-The package verifies JWT tokens from AWS Application Load Balancer (ALB) OIDC integration with Cognito User Pools and provides flexible authorization rules based on email domains, Cognito groups, or specific users.
+The package verifies JWT tokens from AWS Application Load Balancer (ALB) OIDC integration with Cognito User Pools and provides flexible authorisation rules based on email domains, Cognito groups, or specific users.
 
 ## Development Commands
 
@@ -48,18 +48,18 @@ Tests use pytest fixtures and mock User creation for isolation.
    - Raises `InvalidTokenError` or `ExpiredTokenError` on verification failure
 
 3. **Authorizer** (`authorizer.py`)
-   - Composable authorization rules system using Protocol pattern
+   - Composable authorisation rules system using Protocol pattern
    - Built-in rules: `GroupRule`, `EmailRule`
    - `require_all=False` means ANY rule passes (OR logic)
    - `require_all=True` means ALL rules must pass (AND logic)
-   - Can create custom rules by implementing `AuthorizationRule` protocol
-   - Note: Domain-based authorization is not needed as domains are used at signup to assign groups
+   - Can create custom rules by implementing `AuthorisationRule` protocol
+   - Note: Domain-based authorisation is not needed as domains are used at signup to assign groups
 
 4. **AuthGuard** (`guard.py`)
    - Unified interface for protecting apps across frameworks
    - Methods: `streamlit()`, `dash()`, `fastapi()`, `get_current_user_gradio()`, `gradio_middleware()`
    - Factory methods: `from_s3()`, `from_secrets()`, `from_parameter_store()`
-   - Handles both authentication (token verification) and authorization (rule checking)
+   - Handles both authentication (token verification) and authorisation (rule checking)
    - Redirects to `redirect_url` on auth failure (default: https://gds-idea.click/401.html)
 
 ### Authentication Flow
@@ -67,8 +67,8 @@ Tests use pytest fixtures and mock User creation for isolation.
 1. ALB intercepts requests and adds OIDC headers after Cognito authentication
 2. `AuthGuard` extracts headers via framework-specific methods
 3. `User` is instantiated, which triggers `TokenVerifier` to verify both tokens
-4. If tokens valid, `Authorizer` checks if user meets authorization rules
-5. If authorized, user object is returned; otherwise, redirect or raise exception
+4. If tokens valid, `Authorizer` checks if user meets authorisation rules
+5. If authorised, user object is returned; otherwise, redirect or raise exception
 
 ### Framework Integration Patterns
 
@@ -84,7 +84,7 @@ src/cognito_auth/
 ├── __init__.py          # Public API: User, exceptions
 ├── user.py              # User model with token claims
 ├── token_verifier.py    # JWT verification logic
-├── authorizer.py        # Authorization rules engine
+├── authorizer.py        # Authorisation rules engine
 ├── guard.py             # Framework-specific auth guards
 ├── exceptions.py        # Custom exceptions
 └── helpers/             # Framework-specific helper utilities (empty currently)
@@ -107,7 +107,7 @@ user = guard.streamlit()
 
 ### Configuration File Format
 
-JSON structure for authorization rules:
+JSON structure for authorisation rules:
 ```json
 {
   "allowed_groups": ["developers", "admins", "users"],
@@ -198,4 +198,4 @@ user = User.create_mock(
 - Requires Python 3.13+
 - AWS region defaults to `eu-west-2` but is configurable
 - In real Cognito tokens, `username` is a UUID (same as `sub`), so `email` is the primary human-readable identifier
-- Authorization is group-based only - domains are handled at signup to assign users to appropriate groups
+- Authorisation is group-based only - domains are handled at signup to assign users to appropriate groups

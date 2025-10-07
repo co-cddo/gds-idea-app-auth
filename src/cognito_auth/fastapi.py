@@ -76,7 +76,7 @@ class FastAPIAuth(BaseAuth):
                     headers = dict(request.headers)
                     user = self.auth._get_user_from_headers(headers)
 
-                    if not self.auth._is_authorized(user):
+                    if not self.auth._is_authorised(user):
                         return RedirectResponse(url=self.auth.redirect_url)
 
                     # Store user in request state (FastAPI's equivalent of Flask's g)
@@ -91,7 +91,7 @@ class FastAPIAuth(BaseAuth):
 
     def get_auth_user(self, request: Request) -> User:
         """
-        Get the authenticated and authorized user for this request.
+        Get the authenticated and authorised user for this request.
 
         This method is designed to be used with FastAPI's Depends() for
         dependency injection.
@@ -105,10 +105,10 @@ class FastAPIAuth(BaseAuth):
             request: FastAPI Request object (automatically injected by Depends)
 
         Returns:
-            Authenticated and authorized User
+            Authenticated and authorised User
 
         Raises:
-            HTTPException: 401 if authentication fails, 403 if unauthorized
+            HTTPException: 401 if authentication fails, 403 if unauthorised
 
         Example:
             auth.protect_app(app)
@@ -126,7 +126,7 @@ class FastAPIAuth(BaseAuth):
             headers = dict(request.headers)
             user = self._get_user_from_headers(headers)
 
-            if not self._is_authorized(user):
+            if not self._is_authorised(user):
                 raise HTTPException(
                     status_code=403,
                     detail="Access denied. You don't have permission.",

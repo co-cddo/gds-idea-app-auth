@@ -28,8 +28,8 @@ def mock_streamlit():
 # Tests for get_auth_user()
 
 
-def test_get_auth_user_returns_user_when_authorized(mock_streamlit, tmp_path):
-    """get_auth_user returns user when authentication and authorization succeed"""
+def test_get_auth_user_returns_user_when_authorised(mock_streamlit, tmp_path):
+    """get_auth_user returns user when authentication and authorisation succeed"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -46,14 +46,14 @@ def test_get_auth_user_returns_user_when_authorized(mock_streamlit, tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             user = auth.get_auth_user()
             assert user == mock_user
 
 
-def test_get_auth_user_stops_when_unauthorized(mock_streamlit, tmp_path):
-    """get_auth_user calls st.stop() when user is not authorized"""
+def test_get_auth_user_stops_when_unauthorised(mock_streamlit, tmp_path):
+    """get_auth_user calls st.stop() when user is not authorised"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -70,7 +70,7 @@ def test_get_auth_user_stops_when_unauthorized(mock_streamlit, tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=False),
+            patch.object(auth, "_is_authorised", return_value=False),
         ):
             with pytest.raises(SystemExit, match="st.stop"):
                 auth.get_auth_user()
@@ -133,7 +133,7 @@ def test_get_auth_user_uses_streamlit_context_headers(mock_streamlit, tmp_path):
             patch.object(
                 auth, "_get_user_from_headers", return_value=mock_user
             ) as mock_get_user,
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             auth.get_auth_user()
 

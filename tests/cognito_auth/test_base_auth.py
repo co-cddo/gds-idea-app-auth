@@ -207,11 +207,11 @@ def test_get_user_from_headers_creates_user_with_verify_tokens():
         )
 
 
-# Tests for _is_authorized
+# Tests for _is_authorised
 
 
-def test_is_authorized_allows_user_with_no_authorizer(tmp_path):
-    """_is_authorized returns True when no authorizer set"""
+def test_is_authorised_allows_user_with_no_authorizer(tmp_path):
+    """_is_authorised returns True when no authorizer set"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["test"], "allowed_users": [], "require_all": false}'
@@ -224,33 +224,33 @@ def test_is_authorized_allows_user_with_no_authorizer(tmp_path):
         auth.authorizer = None  # Remove authorizer
 
         user = User.create_mock()
-        assert auth._is_authorized(user) is True
+        assert auth._is_authorised(user) is True
 
 
-def test_is_authorized_delegates_to_authorizer():
-    """_is_authorized calls authorizer.is_authorized"""
+def test_is_authorised_delegates_to_authorizer():
+    """_is_authorised calls authorizer.is_authorised"""
     authorizer = Authorizer.from_lists(allowed_groups=["test"])
     auth = BaseAuth(authorizer=authorizer)
     user = User.create_mock()
 
-    # Mock the authorizer's is_authorized method
-    auth.authorizer.is_authorized = MagicMock(return_value=True)
+    # Mock the authorizer's is_authorised method
+    auth.authorizer.is_authorised = MagicMock(return_value=True)
 
-    result = auth._is_authorized(user)
+    result = auth._is_authorised(user)
 
-    auth.authorizer.is_authorized.assert_called_once_with(user)
+    auth.authorizer.is_authorised.assert_called_once_with(user)
     assert result is True
 
 
-def test_is_authorized_respects_authorizer_rejection():
-    """_is_authorized returns False when authorizer rejects"""
+def test_is_authorised_respects_authorizer_rejection():
+    """_is_authorised returns False when authorizer rejects"""
     authorizer = Authorizer.from_lists(allowed_groups=["test"])
     auth = BaseAuth(authorizer=authorizer)
     user = User.create_mock()
 
     # Mock the authorizer to reject
-    auth.authorizer.is_authorized = MagicMock(return_value=False)
+    auth.authorizer.is_authorised = MagicMock(return_value=False)
 
-    result = auth._is_authorized(user)
+    result = auth._is_authorised(user)
 
     assert result is False

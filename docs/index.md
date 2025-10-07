@@ -6,7 +6,7 @@ AWS Cognito authentication for Python web frameworks (Streamlit, Dash, Flask, Fa
 
 - ✅ **Simple**: 2-3 lines of code to protect your entire app
 - ✅ **Multi-framework**: Works with Streamlit, Dash, Flask, FastAPI, and Gradio
-- ✅ **Flexible authorization**: Group-based and email-based rules with AND/OR logic
+- ✅ **Flexible authorisation**: Group-based and email-based rules with AND/OR logic
 - ✅ **Production-ready**: JWT token verification, caching, proper error handling
 - ✅ **Dev mode**: Local development without ALB using mock users
 
@@ -63,7 +63,7 @@ def index(user: User = Depends(auth.get_auth_user)):
 
 1. **AWS ALB** authenticates users via Cognito and adds OIDC headers to requests
 2. **cognito-auth** validates JWT tokens and extracts user information
-3. **Authorizer** checks if user meets your authorization rules
+3. **Authorizer** checks if user meets your authorisation rules
 4. Your app receives an authenticated `User` object with email, groups, etc.
 
 ## Architecture
@@ -80,7 +80,7 @@ User object → Your code
 
 ## Configuration
 
-### Authorization Rules
+### Authorisation Rules
 
 Create `auth-config.json`:
 

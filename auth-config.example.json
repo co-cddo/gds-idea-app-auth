@@ -1,5 +1,5 @@
 {
-  "_comment": "Authorization configuration for cognito-auth",
+  "_comment": "Authorisation configuration for cognito-auth",
   "_description": "This file defines who can access your application",
   "_usage": [
     "For local development: Copy to auth-config.json and set COGNITO_AUTH_CONFIG_PATH=./auth-config.json",

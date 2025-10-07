@@ -79,7 +79,7 @@ class DashAuth(BaseAuth):
                 headers = dict(request.headers)
                 user = self._get_user_from_headers(headers)
 
-                if not self._is_authorized(user):
+                if not self._is_authorised(user):
                     return redirect(self.redirect_url)
 
                 # Store user in request-scoped g object
@@ -90,7 +90,7 @@ class DashAuth(BaseAuth):
 
     def get_auth_user(self) -> User:
         """
-        Get the authenticated and authorized user for this request.
+        Get the authenticated and authorised user for this request.
 
         When using protect_app() (RECOMMENDED), this retrieves the user that was
         validated during the before_request hook.
@@ -98,7 +98,7 @@ class DashAuth(BaseAuth):
         When using @require_auth decorator, this validates the user on-demand.
 
         Returns:
-            Authenticated and authorized User
+            Authenticated and authorised User
 
         Raises:
             RuntimeError: If called outside request context or before protect_app()
@@ -124,7 +124,7 @@ class DashAuth(BaseAuth):
         headers = dict(request.headers)
         user = self._get_user_from_headers(headers)
 
-        if not self._is_authorized(user):
+        if not self._is_authorised(user):
             raise PermissionError(
                 "Access denied. You don't have permission to access this resource."
             )
@@ -158,7 +158,7 @@ class DashAuth(BaseAuth):
                 headers = dict(request.headers)
                 user = self._get_user_from_headers(headers)
 
-                if not self._is_authorized(user):
+                if not self._is_authorised(user):
                     return redirect(self.redirect_url)
 
                 # Store user in g for get_auth_user() to retrieve

@@ -34,7 +34,7 @@ def index(user: User = Depends(auth.get_auth_user)):
 FastAPIAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authorizer`** (optional): Pre-configured Authorizer instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Where to redirect unauthorized users (default: "https://gds-idea.click/401.html")
+- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.click/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
@@ -45,17 +45,17 @@ from cognito_auth.fastapi import FastAPIAuth
 authorizer = Authorizer.from_lists(allowed_groups=["developers"])
 auth = FastAPIAuth(
     authorizer=authorizer,
-    redirect_url="https://myapp.com/unauthorized",
+    redirect_url="https://myapp.com/unauthorised",
     region="us-east-1"
 )
 ```
 
 ## Behavior
 
-FastAPIAuth uses dependency injection with `Depends()`. When authentication or authorization fails:
+FastAPIAuth uses dependency injection with `Depends()`. When authentication or authorisation fails:
 
 - **With `protect_app()`**: Middleware redirects to `redirect_url` before any route executes
-- **Without `protect_app()`**: Routes with `Depends(auth.get_auth_user)` raise `HTTPException` (401 for auth failure, 403 for unauthorized)
+- **Without `protect_app()`**: Routes with `Depends(auth.get_auth_user)` raise `HTTPException` (401 for auth failure, 403 for unauthorised)
 
 The user is stored in `request.state.user`, making it efficient to call `get_auth_user()` multiple times.
 
@@ -82,13 +82,13 @@ To customize the mock user returned in dev mode, create a `dev-mock-user.json` f
 }
 ```
 
-The mock user will use these values instead of the defaults. This is useful for testing different authorization scenarios.
+The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
 
 **Available fields:**
 - `email` - Mock user's email address
 - `sub` - Mock user's Cognito subject (UUID)
 - `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorization testing
+- `groups` - Mock user's Cognito groups for authorisation testing
 
 See `dev-mock-user.example.json` in the repository for a complete template with comments.
 

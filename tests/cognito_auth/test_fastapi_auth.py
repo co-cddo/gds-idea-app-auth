@@ -41,8 +41,8 @@ def test_protect_app_adds_middleware(tmp_path):
         assert len(app.user_middleware) > initial_middleware_count
 
 
-def test_protect_app_middleware_redirects_unauthorized_user(tmp_path):
-    """protect_app middleware redirects unauthorized users"""
+def test_protect_app_middleware_redirects_unauthorised_user(tmp_path):
+    """protect_app middleware redirects unauthorised users"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -64,7 +64,7 @@ def test_protect_app_middleware_redirects_unauthorized_user(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=False),
+            patch.object(auth, "_is_authorised", return_value=False),
         ):
             auth.protect_app(app)
             client = TestClient(app)
@@ -106,7 +106,7 @@ def test_get_auth_user_retrieves_from_request_state_when_protect_app_used(tmp_pa
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             auth.protect_app(app)
             client = TestClient(app)
@@ -141,7 +141,7 @@ def test_get_auth_user_validates_on_demand_without_protect_app(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             client = TestClient(app)
 
@@ -151,8 +151,8 @@ def test_get_auth_user_validates_on_demand_without_protect_app(tmp_path):
             assert response.json()["email"] == mock_user.email
 
 
-def test_get_auth_user_raises_http_exception_when_unauthorized(tmp_path):
-    """get_auth_user raises HTTPException 403 when user not authorized"""
+def test_get_auth_user_raises_http_exception_when_unauthorised(tmp_path):
+    """get_auth_user raises HTTPException 403 when user not authorised"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -174,7 +174,7 @@ def test_get_auth_user_raises_http_exception_when_unauthorized(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=False),
+            patch.object(auth, "_is_authorised", return_value=False),
         ):
             client = TestClient(app)
 
@@ -214,8 +214,8 @@ def test_get_auth_user_raises_http_exception_on_auth_failure(tmp_path):
             assert "Authentication failed" in response.json()["detail"]
 
 
-def test_protect_app_allows_authorized_user(tmp_path):
-    """protect_app middleware allows authorized users through"""
+def test_protect_app_allows_authorised_user(tmp_path):
+    """protect_app middleware allows authorised users through"""
     config_file = tmp_path / "auth-config.json"
     config_file.write_text(
         '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
@@ -237,7 +237,7 @@ def test_protect_app_allows_authorized_user(tmp_path):
 
         with (
             patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorized", return_value=True),
+            patch.object(auth, "_is_authorised", return_value=True),
         ):
             auth.protect_app(app)
             client = TestClient(app)

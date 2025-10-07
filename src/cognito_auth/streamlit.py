@@ -26,17 +26,17 @@ class StreamlitAuth(BaseAuth):
 
     def get_auth_user(self) -> User:
         """
-        Get the authenticated and authorized user for this request.
+        Get the authenticated and authorised user for this request.
 
-        Validates user from Cognito headers and checks authorization.
-        Stops execution with error message if authentication or authorization fails.
+        Validates user from Cognito headers and checks authorisation.
+        Stops execution with error message if authentication or authorisation fails.
 
         Note: Unlike other frameworks, Streamlit has no native redirect function.
         This method displays an error message and stops execution using st.stop(),
         which prevents any code after this call from running.
 
         Returns:
-            Authenticated and authorized User
+            Authenticated and authorised User
 
         Example:
             auth = StreamlitAuth()
@@ -47,7 +47,7 @@ class StreamlitAuth(BaseAuth):
             headers = st.context.headers
             user = self._get_user_from_headers(dict(headers))
 
-            if not self._is_authorized(user):
+            if not self._is_authorised(user):
                 st.error("🔒 Access denied. You don't have permission to access this application.")
                 st.info("Please contact your administrator if you believe this is an error.")
                 st.stop()

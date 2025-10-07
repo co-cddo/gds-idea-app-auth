@@ -53,7 +53,7 @@ app = gr.mount_gradio_app(app, demo, path="/")
 GradioAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authorizer`** (optional): Pre-configured Authorizer instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Where to redirect unauthorized users (default: "https://gds-idea.click/401.html")
+- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.click/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
@@ -64,7 +64,7 @@ from cognito_auth.gradio import GradioAuth
 authorizer = Authorizer.from_lists(allowed_groups=["developers"])
 auth = GradioAuth(
     authorizer=authorizer,
-    redirect_url="https://myapp.com/unauthorized",
+    redirect_url="https://myapp.com/unauthorised",
     region="us-east-1"
 )
 ```
@@ -75,7 +75,7 @@ GradioAuth works in two modes:
 
 **Standalone Gradio:**
 - User must be passed to `get_auth_user(request)` in each function
-- Raises `PermissionError` on authorization failure
+- Raises `PermissionError` on authorisation failure
 
 **Gradio + FastAPI with `protect_app()`:**
 - Middleware redirects to `redirect_url` before Gradio functions execute
@@ -104,13 +104,13 @@ To customize the mock user returned in dev mode, create a `dev-mock-user.json` f
 }
 ```
 
-The mock user will use these values instead of the defaults. This is useful for testing different authorization scenarios.
+The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
 
 **Available fields:**
 - `email` - Mock user's email address
 - `sub` - Mock user's Cognito subject (UUID)
 - `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorization testing
+- `groups` - Mock user's Cognito groups for authorisation testing
 
 See `dev-mock-user.example.json` in the repository for a complete template with comments.
 

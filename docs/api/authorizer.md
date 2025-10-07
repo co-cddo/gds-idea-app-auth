@@ -1,6 +1,6 @@
 # Authorizer
 
-The `Authorizer` class provides flexible authorization rules for controlling access to your application.
+The `Authorizer` class provides flexible authorisation rules for controlling access to your application.
 
 ::: cognito_auth.authorizer.Authorizer
     options:
@@ -11,9 +11,9 @@ The `Authorizer` class provides flexible authorization rules for controlling acc
         - from_lists
         - from_config
         - clear_config_cache
-        - is_authorized
+        - is_authorised
 
-## Authorization Rules
+## Authorisation Rules
 
 ### GroupRule
 
@@ -46,7 +46,7 @@ authorizer = Authorizer.from_lists(
 )
 
 user = User.create_mock(groups=["developers"])
-assert authorizer.is_authorized(user) is True
+assert authorizer.is_authorised(user) is True
 ```
 
 ### OR Logic (Default)
@@ -106,7 +106,7 @@ See `auth-config.example.json` for a complete template.
 
 ## Caching
 
-Authorization config loaded via `from_config()` is cached for 5 minutes (300 seconds). To force a reload:
+Authorisation config loaded via `from_config()` is cached for 5 minutes (300 seconds). To force a reload:
 
 ```python
 Authorizer.clear_config_cache()
