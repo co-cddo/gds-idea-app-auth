@@ -147,7 +147,7 @@ class User:
         Create a mock user for development and testing.
 
         This method creates a User instance without requiring valid JWT tokens.
-        It loads defaults from .cognito-auth-dev.json if present, and falls back
+        It loads defaults from dev-mock-user.json if present, and falls back
         to sensible defaults.
 
         Args:
@@ -232,8 +232,8 @@ class User:
         if config_path:
             path = Path(config_path)
         else:
-            # Default to .cognito-auth-dev.json in current directory
-            path = Path.cwd() / ".cognito-auth-dev.json"
+            # Default to dev-mock-user.json in current directory
+            path = Path.cwd() / "dev-mock-user.json"
 
         if path.exists():
             try:

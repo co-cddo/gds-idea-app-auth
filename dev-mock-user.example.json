@@ -1,0 +1,22 @@
+{
+  "_comment": "DEVELOPMENT MODE ONLY - Mock user configuration for local testing",
+  "_description": "This file customizes the mock user returned when COGNITO_AUTH_DEV_MODE=true",
+  "_usage": [
+    "1. Copy this file to dev-mock-user.json (remove .example from filename)",
+    "2. Set COGNITO_AUTH_DEV_MODE=true in your environment",
+    "3. Customize the mock user details below",
+    "WARNING: Never use dev mode in production!"
+  ],
+
+  "email": "developer@example.com",
+  "sub": "12345678-1234-1234-1234-123456789abc",
+  "username": "12345678-1234-1234-1234-123456789abc",
+  "groups": ["developers", "users"],
+
+  "_field_descriptions": {
+    "email": "Mock user's email address",
+    "sub": "Mock user's Cognito subject (UUID)",
+    "username": "Mock user's username (usually same as sub)",
+    "groups": "Mock user's Cognito groups for authorization testing"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "_comment": "Authorization configuration for cognito-auth",
+  "_description": "This file defines who can access your application",
+  "_usage": [
+    "For local development: Copy to auth-config.json and set COGNITO_AUTH_CONFIG_PATH=./auth-config.json",
+    "For production: Store in AWS Secrets Manager and set COGNITO_AUTH_SECRET_NAME=your-secret-name"
+  ],
+
+  "allowed_groups": ["developers", "admins", "users"],
+  "allowed_users": ["special-user@example.com"],
+  "require_all": false,
+
+  "_field_descriptions": {
+    "allowed_groups": "List of Cognito groups that can access the app (OR logic if require_all=false)",
+    "allowed_users": "List of specific email addresses that can access the app",
+    "require_all": "If true, user must match ALL rules (AND logic). If false, user must match ANY rule (OR logic)"
+  }
+}

@@ -1,5 +1,0 @@
-{
-  "allowed_groups": ["developers", "admins", "users"],
-  "allowed_users": ["special-user@example.com"],
-  "require_all": false
-}

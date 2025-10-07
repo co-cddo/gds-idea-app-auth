@@ -19,7 +19,7 @@ def mock_dev_config(tmp_path):
         "sub": "fixture-sub-123",
         "groups": ["fixture-group"],
     }
-    config_file = tmp_path / ".cognito-auth-dev.json"
+    config_file = tmp_path / "dev-mock-user.json"
     config_file.write_text(json.dumps(config))
     return tmp_path, config
 
@@ -133,7 +133,7 @@ def test_create_mock_handles_missing_json(suppress_warnings):
 
 def test_create_mock_handles_invalid_json(tmp_path):
     """Invalid JSON file warns and falls back to defaults"""
-    config_file = tmp_path / ".cognito-auth-dev.json"
+    config_file = tmp_path / "dev-mock-user.json"
     config_file.write_text("invalid json {{{")
 
     with warnings.catch_warnings(record=True) as w:

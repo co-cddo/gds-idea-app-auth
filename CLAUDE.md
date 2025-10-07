@@ -116,7 +116,7 @@ JSON structure for authorization rules:
 }
 ```
 
-See `auth-config.json.example` for a template.
+See `auth-config.example.json` for a template.
 
 ### Environment Variables
 
@@ -158,7 +158,7 @@ For local development without ALB/Cognito headers:
    export COGNITO_AUTH_DEV_MODE=true
    ```
 
-2. **Configure mock user** (optional) by creating `.cognito-auth-dev.json`:
+2. **Configure mock user** (optional) by creating `dev-mock-user.json`:
    ```json
    {
      "email": "developer@example.com",
@@ -167,7 +167,7 @@ For local development without ALB/Cognito headers:
      "groups": ["developers", "users"]
    }
    ```
-   See `.cognito-auth-dev.json.example` for template.
+   See `dev-mock-user.example.json` for template.
 
 3. **Use AuthGuard normally** - it will automatically use mock users when headers are missing:
    ```python
