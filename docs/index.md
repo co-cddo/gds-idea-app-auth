@@ -121,7 +121,4 @@ Optionally customize the mock user with `dev-mock-user.json`:
 
 ## Next Steps
 
-- [Installation Guide](getting-started/installation.md)
-- [Quick Start](getting-started/quickstart.md)
-- [Framework Guides](frameworks/streamlit.md)
 - [API Reference](api/user.md)
