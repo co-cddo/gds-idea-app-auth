@@ -82,7 +82,7 @@ class EmailRule:
         return user.email in self.allowed_emails
 
 
-class Authorizer:
+class Authoriser:
     """Handles authorisation logic using composable rules"""
 
     def __init__(self, rules: list[AuthorisationRule], require_all: bool = False):
@@ -166,11 +166,11 @@ class Authorizer:
         Example:
             # Development
             export COGNITO_AUTH_CONFIG_PATH=./auth-config.json
-            authorizer = Authorizer.from_config()
+            authorizer = Authoriser.from_config()
 
             # Production
             export COGNITO_AUTH_SECRET_NAME=my-app/auth-config
-            authorizer = Authorizer.from_config()
+            authorizer = Authoriser.from_config()
         """
         config_path = os.getenv("COGNITO_AUTH_CONFIG_PATH")
         secret_name = os.getenv("COGNITO_AUTH_SECRET_NAME")
@@ -239,10 +239,10 @@ class Authorizer:
         waiting for the 5-minute TTL to expire.
 
         Example:
-            from cognito_auth import Authorizer
+            from cognito_auth import Authoriser
 
             # After updating secret in AWS
-            Authorizer.clear_config_cache()
+            Authoriser.clear_config_cache()
 
             # Next call will fetch fresh config
             guard = AuthGuard.from_config()

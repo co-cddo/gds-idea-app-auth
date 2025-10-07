@@ -3,14 +3,14 @@ from unittest.mock import patch
 
 import pytest
 
-from cognito_auth import Authorizer, User
+from cognito_auth import Authoriser, User
 from cognito_auth.streamlit import StreamlitAuth
 
 
 @pytest.fixture(autouse=True)
 def clear_cache_before_test():
     """Automatically clear config cache before each test"""
-    Authorizer.clear_config_cache()
+    Authoriser.clear_config_cache()
     return
 
 

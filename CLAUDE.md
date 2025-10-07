@@ -47,7 +47,7 @@ Tests use pytest fixtures and mock User creation for isolation.
    - Fetches public keys from AWS endpoints and caches them (default 1 hour TTL)
    - Raises `InvalidTokenError` or `ExpiredTokenError` on verification failure
 
-3. **Authorizer** (`authorizer.py`)
+3. **Authoriser** (`authoriser.py`)
    - Composable authorisation rules system using Protocol pattern
    - Built-in rules: `GroupRule`, `EmailRule`
    - `require_all=False` means ANY rule passes (OR logic)
@@ -67,7 +67,7 @@ Tests use pytest fixtures and mock User creation for isolation.
 1. ALB intercepts requests and adds OIDC headers after Cognito authentication
 2. `AuthGuard` extracts headers via framework-specific methods
 3. `User` is instantiated, which triggers `TokenVerifier` to verify both tokens
-4. If tokens valid, `Authorizer` checks if user meets authorisation rules
+4. If tokens valid, `Authoriser` checks if user meets authorisation rules
 5. If authorised, user object is returned; otherwise, redirect or raise exception
 
 ### Framework Integration Patterns

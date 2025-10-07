@@ -74,7 +74,7 @@ nav:
       - Gradio: frameworks/gradio.md
   - API Reference:
       - User: api/user.md
-      - Authorizer: api/authorizer.md
+      - Authoriser: api/authoriser.md
       - StreamlitAuth: api/streamlit-auth.md
       - DashAuth: api/dash-auth.md
       - FastAPIAuth: api/fastapi-auth.md

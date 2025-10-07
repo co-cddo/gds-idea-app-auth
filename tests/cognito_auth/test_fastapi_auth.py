@@ -5,14 +5,14 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from cognito_auth import Authorizer, User
+from cognito_auth import Authoriser, User
 from cognito_auth.fastapi import FastAPIAuth
 
 
 @pytest.fixture(autouse=True)
 def clear_cache_before_test():
     """Automatically clear config cache before each test"""
-    Authorizer.clear_config_cache()
+    Authoriser.clear_config_cache()
     return
 
 

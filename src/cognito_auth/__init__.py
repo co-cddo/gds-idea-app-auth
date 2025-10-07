@@ -1,10 +1,10 @@
-from .authorizer import Authorizer
+from .authoriser import Authoriser
 from .exceptions import ExpiredTokenError, InvalidTokenError, MissingTokenError
 from .user import User
 
 __all__ = [
     "User",
-    "Authorizer",
+    "Authoriser",
     "ExpiredTokenError",
     "InvalidTokenError",
     "MissingTokenError",

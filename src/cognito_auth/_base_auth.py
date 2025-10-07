@@ -5,7 +5,7 @@ Base authentication class with shared logic for all frameworks.
 import os
 import warnings
 
-from .authorizer import Authorizer
+from .authoriser import Authoriser
 from .user import User
 
 
@@ -22,12 +22,12 @@ class BaseAuth:
 
     def __init__(
         self,
-        authorizer: Authorizer | None = None,
+        authoriser: Authoriser | None = None,
         redirect_url: str = "https://gds-idea.click/401.html",
         region: str = "eu-west-2",
     ):
         """
-        Initialize auth. Auto-loads from environment variables if no authorizer provided.
+        Initialize auth. Auto-loads from environment variables if no authoriser provided.
 
         Environment variables:
         - COGNITO_AUTH_CONFIG_PATH: Local JSON file (development)
@@ -35,7 +35,7 @@ class BaseAuth:
         - COGNITO_AUTH_DEV_MODE: Use mock users (local development)
 
         Args:
-            authorizer: Pre-configured Authorizer. If None, loads from env vars.
+            authorizer: Pre-configured Authoriser. If None, loads from env vars.
             redirect_url: Where to redirect on auth failure
             region: AWS region
         """
@@ -58,10 +58,10 @@ class BaseAuth:
             )
 
         # Auto-load from config if not provided
-        if authorizer is None:
-            authorizer = Authorizer.from_config()
+        if authoriser is None:
+            authoriser = Authoriser.from_config()
 
-        self.authorizer = authorizer
+        self.authoriser = authoriser
 
     def _get_header(self, headers: dict, name: str) -> str | None:
         """
@@ -101,6 +101,6 @@ class BaseAuth:
 
     def _is_authorised(self, user: User) -> bool:
         """Check if user passes authorisation rules."""
-        if self.authorizer is not None and not self.authorizer.is_authorised(user):
+        if self.authoriser is not None and not self.authoriser.is_authorised(user):
             return False
         return True

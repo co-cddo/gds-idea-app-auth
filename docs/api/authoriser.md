@@ -2,7 +2,7 @@
 
 The `Authorizer` class provides flexible authorisation rules for controlling access to your application.
 
-::: cognito_auth.authorizer.Authorizer
+::: cognito_auth.authoriser.Authorizer
     options:
       show_root_heading: true
       show_source: true
@@ -17,7 +17,7 @@ The `Authorizer` class provides flexible authorisation rules for controlling acc
 
 ### GroupRule
 
-::: cognito_auth.authorizer.GroupRule
+::: cognito_auth.authoriser.GroupRule
     options:
       show_root_heading: true
       members:
@@ -26,7 +26,7 @@ The `Authorizer` class provides flexible authorisation rules for controlling acc
 
 ### EmailRule
 
-::: cognito_auth.authorizer.EmailRule
+::: cognito_auth.authoriser.EmailRule
     options:
       show_root_heading: true
       members:
@@ -38,10 +38,10 @@ The `Authorizer` class provides flexible authorisation rules for controlling acc
 ### Basic Usage
 
 ```python
-from cognito_auth import Authorizer, User
+from cognito_auth import Authoriser, User
 
 # Allow specific groups
-authorizer = Authorizer.from_lists(
+authorizer = Authoriser.from_lists(
     allowed_groups=["developers", "admins"]
 )
 
@@ -54,7 +54,7 @@ assert authorizer.is_authorised(user) is True
 By default, user must match ANY rule:
 
 ```python
-authorizer = Authorizer.from_lists(
+authorizer = Authoriser.from_lists(
     allowed_groups=["developers"],
     allowed_users=["special@example.com"],
     require_all=False  # Default
@@ -68,7 +68,7 @@ authorizer = Authorizer.from_lists(
 Require user to match ALL rules:
 
 ```python
-authorizer = Authorizer.from_lists(
+authorizer = Authoriser.from_lists(
     allowed_groups=["developers"],
     allowed_users=["admin@example.com"],
     require_all=True
@@ -83,11 +83,11 @@ authorizer = Authorizer.from_lists(
 # From local file (development)
 import os
 os.environ["COGNITO_AUTH_CONFIG_PATH"] = "./auth-config.json"
-authorizer = Authorizer.from_config()
+authorizer = Authoriser.from_config()
 
 # From AWS Secrets Manager (production)
 os.environ["COGNITO_AUTH_SECRET_NAME"] = "my-app/auth-config"
-authorizer = Authorizer.from_config()
+authorizer = Authoriser.from_config()
 ```
 
 ## Configuration File Format
@@ -109,5 +109,5 @@ See `auth-config.example.json` for a complete template.
 Authorisation config loaded via `from_config()` is cached for 5 minutes (300 seconds). To force a reload:
 
 ```python
-Authorizer.clear_config_cache()
+Authoriser.clear_config_cache()
 ```

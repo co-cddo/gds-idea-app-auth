@@ -38,13 +38,13 @@ FastAPIAuth inherits from BaseAuth and accepts these parameters:
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
-from cognito_auth import Authorizer
+from cognito_auth import Authoriser
 from cognito_auth.fastapi import FastAPIAuth
 
 # Custom configuration
-authorizer = Authorizer.from_lists(allowed_groups=["developers"])
+authorizer = Authoriser.from_lists(allowed_groups=["developers"])
 auth = FastAPIAuth(
-    authorizer=authorizer,
+    authoriser=authorizer,
     redirect_url="https://myapp.com/unauthorised",
     region="us-east-1"
 )

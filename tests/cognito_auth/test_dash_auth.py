@@ -5,14 +5,14 @@ import pytest
 from dash import Dash
 from flask import Flask, g
 
-from cognito_auth import Authorizer, User
+from cognito_auth import Authoriser, User
 from cognito_auth.dash import DashAuth
 
 
 @pytest.fixture(autouse=True)
 def clear_cache_before_test():
     """Automatically clear config cache before each test"""
-    Authorizer.clear_config_cache()
+    Authoriser.clear_config_cache()
     return
 
 
