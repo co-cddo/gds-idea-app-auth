@@ -178,6 +178,24 @@ def test_user_groups_populated(suppress_warnings):
     assert user.groups == ["admin", "users", "developers"]
 
 
+def test_user_is_admin_true(suppress_warnings):
+    """is_admin returns True when user is in gds-idea group"""
+    user = User.create_mock(groups=["gds-idea", "users"])
+    assert user.is_admin is True
+
+
+def test_user_is_admin_false(suppress_warnings):
+    """is_admin returns False when user is not in gds-idea group"""
+    user = User.create_mock(groups=["admin", "users", "developers"])
+    assert user.is_admin is False
+
+
+def test_user_is_admin_empty_groups(suppress_warnings):
+    """is_admin returns False when groups is empty"""
+    user = User.create_mock(groups=[])
+    assert user.is_admin is False
+
+
 def test_user_exp_in_future(suppress_warnings):
     """Expiration is in the future"""
     user = User.create_mock()

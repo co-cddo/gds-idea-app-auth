@@ -91,6 +91,11 @@ class User:
         return self._access_claims.get("cognito:groups", [])
 
     @property
+    def is_admin(self) -> bool:
+        """Whether the user is an admin (member of gds-idea group)"""
+        return "gds-idea" in self.groups
+
+    @property
     def email_verified(self) -> bool:
         """Whether the user's email has been verified"""
         verified = self._oidc_claims.get("email_verified", "false")
