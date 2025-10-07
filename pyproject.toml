@@ -15,6 +15,19 @@ dependencies = [
     "cachetools>=6.2.0",
 ]
 
+[project.optional-dependencies]
+streamlit = ["streamlit>=1.0.0"]
+dash = ["dash>=2.0.0", "flask>=2.0.0"]
+fastapi = ["fastapi>=0.100.0"]
+gradio = ["gradio>=4.0.0"]
+all = [
+    "streamlit>=1.0.0",
+    "dash>=2.0.0",
+    "flask>=2.0.0",
+    "fastapi>=0.100.0",
+    "gradio>=4.0.0",
+]
+
 [project.scripts]
 cognito-auth = "cognito_auth:main"
 
