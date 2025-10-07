@@ -35,7 +35,7 @@ class BaseAuth:
         - COGNITO_AUTH_DEV_MODE: Use mock users (local development)
 
         Args:
-            authorizer: Pre-configured Authoriser. If None, loads from env vars.
+            authoriser: Pre-configured Authoriser. If None, loads from env vars.
             redirect_url: Where to redirect on auth failure
             region: AWS region
         """

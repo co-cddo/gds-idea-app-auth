@@ -84,7 +84,7 @@ src/cognito_auth/
 ├── __init__.py          # Public API: User, exceptions
 ├── user.py              # User model with token claims
 ├── token_verifier.py    # JWT verification logic
-├── authorizer.py        # Authorisation rules engine
+├── authoriser.py        # Authorisation rules engine
 ├── guard.py             # Framework-specific auth guards
 ├── exceptions.py        # Custom exceptions
 └── helpers/             # Framework-specific helper utilities (empty currently)
@@ -142,7 +142,7 @@ Config validation with Pydantic ensures:
 
 ### Testing Config Loading
 
-Tests located in `tests/cognito_auth/test_authorizer.py` cover:
+Tests located in `tests/cognito_auth/test_authoriser.py` cover:
 - Loading from local files
 - Loading from AWS Secrets (mocked)
 - Email validation

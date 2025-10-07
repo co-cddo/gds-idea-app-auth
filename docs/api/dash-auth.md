@@ -34,7 +34,7 @@ def my_callback(...):
 
 DashAuth inherits from BaseAuth and accepts these parameters:
 
-- **`authorizer`** (optional): Pre-configured Authorizer instance. If not provided, auto-loads from environment variables
+- **`authoriser`** (optional): Pre-configured Authoriser instance. If not provided, auto-loads from environment variables
 - **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.click/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
@@ -43,9 +43,9 @@ from cognito_auth import Authoriser
 from cognito_auth.dash import DashAuth
 
 # Custom configuration
-authorizer = Authoriser.from_lists(allowed_groups=["developers"])
+authoriser = Authoriser.from_lists(allowed_groups=["developers"])
 auth = DashAuth(
-    authoriser=authorizer,
+    authoriser=authoriser,
     redirect_url="https://myapp.com/unauthorised",
     region="us-east-1"
 )

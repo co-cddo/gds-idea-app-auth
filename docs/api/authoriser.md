@@ -1,8 +1,8 @@
-# Authorizer
+# Authoriser
 
-The `Authorizer` class provides flexible authorisation rules for controlling access to your application.
+The `Authoriser` class provides flexible authorisation rules for controlling access to your application.
 
-::: cognito_auth.authoriser.Authorizer
+::: cognito_auth.authoriser.Authoriser
     options:
       show_root_heading: true
       show_source: true
@@ -41,12 +41,12 @@ The `Authorizer` class provides flexible authorisation rules for controlling acc
 from cognito_auth import Authoriser, User
 
 # Allow specific groups
-authorizer = Authoriser.from_lists(
+authoriser = Authoriser.from_lists(
     allowed_groups=["developers", "admins"]
 )
 
 user = User.create_mock(groups=["developers"])
-assert authorizer.is_authorised(user) is True
+assert authoriser.is_authorised(user) is True
 ```
 
 ### OR Logic (Default)
@@ -54,7 +54,7 @@ assert authorizer.is_authorised(user) is True
 By default, user must match ANY rule:
 
 ```python
-authorizer = Authoriser.from_lists(
+authoriser = Authoriser.from_lists(
     allowed_groups=["developers"],
     allowed_users=["special@example.com"],
     require_all=False  # Default
@@ -68,7 +68,7 @@ authorizer = Authoriser.from_lists(
 Require user to match ALL rules:
 
 ```python
-authorizer = Authoriser.from_lists(
+authoriser = Authoriser.from_lists(
     allowed_groups=["developers"],
     allowed_users=["admin@example.com"],
     require_all=True
@@ -83,11 +83,11 @@ authorizer = Authoriser.from_lists(
 # From local file (development)
 import os
 os.environ["COGNITO_AUTH_CONFIG_PATH"] = "./auth-config.json"
-authorizer = Authoriser.from_config()
+authoriser = Authoriser.from_config()
 
 # From AWS Secrets Manager (production)
 os.environ["COGNITO_AUTH_SECRET_NAME"] = "my-app/auth-config"
-authorizer = Authoriser.from_config()
+authoriser = Authoriser.from_config()
 ```
 
 ## Configuration File Format

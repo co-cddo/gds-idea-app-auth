@@ -28,7 +28,7 @@ st.write(f"Groups: {', '.join(user.groups)}")
 
 StreamlitAuth inherits from BaseAuth and accepts these parameters:
 
-- **`authorizer`** (optional): Pre-configured Authorizer instance. If not provided, auto-loads from environment variables
+- **`authoriser`** (optional): Pre-configured Authoriser instance. If not provided, auto-loads from environment variables
 - **`redirect_url`** (optional): Not used in Streamlit (defaults to "https://gds-idea.click/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
@@ -37,9 +37,9 @@ from cognito_auth import Authoriser
 from cognito_auth.streamlit import StreamlitAuth
 
 # Custom configuration
-authorizer = Authoriser.from_lists(allowed_groups=["developers"])
+authoriser = Authoriser.from_lists(allowed_groups=["developers"])
 auth = StreamlitAuth(
-    authoriser=authorizer,
+    authoriser=authoriser,
     region="us-east-1"
 )
 ```

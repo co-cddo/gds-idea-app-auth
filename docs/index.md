@@ -63,7 +63,7 @@ def index(user: User = Depends(auth.get_auth_user)):
 
 1. **AWS ALB** authenticates users via Cognito and adds OIDC headers to requests
 2. **cognito-auth** validates JWT tokens and extracts user information
-3. **Authorizer** checks if user meets your authorisation rules
+3. **Authoriser** checks if user meets your authorisation rules
 4. Your app receives an authenticated `User` object with email, groups, etc.
 
 ## Architecture

@@ -111,213 +111,213 @@ def test_email_rule_with_empty_allowed_emails(mock_user):
     assert rule.is_allowed(mock_user) is False
 
 
-# Tests for Authorizer with single rules
+# Tests for Authoriser with single rules
 
 
-def test_authorizer_with_single_group_rule_allows(mock_user):
-    """Authorizer with group rule allows matching user"""
+def test_authoriser_with_single_group_rule_allows(mock_user):
+    """Authoriser with group rule allows matching user"""
     rule = GroupRule({"developers"})
-    authorizer = Authoriser([rule])
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser([rule])
+    assert authoriser.is_authorised(mock_user) is True
 
 
-def test_authorizer_with_single_group_rule_denies(mock_user):
-    """Authorizer with group rule denies non-matching user"""
+def test_authoriser_with_single_group_rule_denies(mock_user):
+    """Authoriser with group rule denies non-matching user"""
     rule = GroupRule({"admins"})
-    authorizer = Authoriser([rule])
-    assert authorizer.is_authorised(mock_user) is False
+    authoriser = Authoriser([rule])
+    assert authoriser.is_authorised(mock_user) is False
 
 
-def test_authorizer_with_single_email_rule_allows(mock_user):
-    """Authorizer with email rule allows matching user"""
+def test_authoriser_with_single_email_rule_allows(mock_user):
+    """Authoriser with email rule allows matching user"""
     rule = EmailRule({"test@example.com"})
-    authorizer = Authoriser([rule])
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser([rule])
+    assert authoriser.is_authorised(mock_user) is True
 
 
-def test_authorizer_with_single_email_rule_denies(mock_user):
-    """Authorizer with email rule denies non-matching user"""
+def test_authoriser_with_single_email_rule_denies(mock_user):
+    """Authoriser with email rule denies non-matching user"""
     rule = EmailRule({"other@example.com"})
-    authorizer = Authoriser([rule])
-    assert authorizer.is_authorised(mock_user) is False
+    authoriser = Authoriser([rule])
+    assert authoriser.is_authorised(mock_user) is False
 
 
-# Tests for Authorizer with multiple rules (OR logic)
+# Tests for Authoriser with multiple rules (OR logic)
 
 
-def test_authorizer_or_logic_allows_when_one_rule_passes(mock_user):
+def test_authoriser_or_logic_allows_when_one_rule_passes(mock_user):
     """With OR logic, user passes if any rule matches"""
     rules = [
         GroupRule({"admins"}),  # Doesn't match
         EmailRule({"test@example.com"}),  # Matches
     ]
-    authorizer = Authoriser(rules, require_all=False)
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser(rules, require_all=False)
+    assert authoriser.is_authorised(mock_user) is True
 
 
-def test_authorizer_or_logic_denies_when_no_rules_pass(mock_user):
+def test_authoriser_or_logic_denies_when_no_rules_pass(mock_user):
     """With OR logic, user denied if no rules match"""
     rules = [
         GroupRule({"admins"}),  # Doesn't match
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
-    authorizer = Authoriser(rules, require_all=False)
-    assert authorizer.is_authorised(mock_user) is False
+    authoriser = Authoriser(rules, require_all=False)
+    assert authoriser.is_authorised(mock_user) is False
 
 
-def test_authorizer_or_logic_allows_when_all_rules_pass(mock_user):
+def test_authoriser_or_logic_allows_when_all_rules_pass(mock_user):
     """With OR logic, user passes if all rules match"""
     rules = [
         GroupRule({"developers"}),  # Matches
         EmailRule({"test@example.com"}),  # Matches
     ]
-    authorizer = Authoriser(rules, require_all=False)
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser(rules, require_all=False)
+    assert authoriser.is_authorised(mock_user) is True
 
 
-# Tests for Authorizer with multiple rules (AND logic)
+# Tests for Authoriser with multiple rules (AND logic)
 
 
-def test_authorizer_and_logic_allows_when_all_rules_pass(mock_user):
+def test_authoriser_and_logic_allows_when_all_rules_pass(mock_user):
     """With AND logic, user passes only if all rules match"""
     rules = [
         GroupRule({"developers"}),  # Matches
         EmailRule({"test@example.com"}),  # Matches
     ]
-    authorizer = Authoriser(rules, require_all=True)
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser(rules, require_all=True)
+    assert authoriser.is_authorised(mock_user) is True
 
 
-def test_authorizer_and_logic_denies_when_one_rule_fails(mock_user):
+def test_authoriser_and_logic_denies_when_one_rule_fails(mock_user):
     """With AND logic, user denied if any rule fails"""
     rules = [
         GroupRule({"developers"}),  # Matches
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
-    authorizer = Authoriser(rules, require_all=True)
-    assert authorizer.is_authorised(mock_user) is False
+    authoriser = Authoriser(rules, require_all=True)
+    assert authoriser.is_authorised(mock_user) is False
 
 
-def test_authorizer_and_logic_denies_when_all_rules_fail(mock_user):
+def test_authoriser_and_logic_denies_when_all_rules_fail(mock_user):
     """With AND logic, user denied if all rules fail"""
     rules = [
         GroupRule({"admins"}),  # Doesn't match
         EmailRule({"other@example.com"}),  # Doesn't match
     ]
-    authorizer = Authoriser(rules, require_all=True)
-    assert authorizer.is_authorised(mock_user) is False
+    authoriser = Authoriser(rules, require_all=True)
+    assert authoriser.is_authorised(mock_user) is False
 
 
-# Tests for Authorizer with no rules
+# Tests for Authoriser with no rules
 
 
-def test_authorizer_with_no_rules_allows_authenticated_user(mock_user):
-    """Authorizer with no rules allows any authenticated user"""
-    authorizer = Authoriser([])
-    assert authorizer.is_authorised(mock_user) is True
+def test_authoriser_with_no_rules_allows_authenticated_user(mock_user):
+    """Authoriser with no rules allows any authenticated user"""
+    authoriser = Authoriser([])
+    assert authoriser.is_authorised(mock_user) is True
 
 
-def test_authorizer_with_empty_rules_allows(mock_user):
+def test_authoriser_with_empty_rules_allows(mock_user):
     """Empty rules list allows any authenticated user"""
-    authorizer = Authoriser([], require_all=False)
-    assert authorizer.is_authorised(mock_user) is True
+    authoriser = Authoriser([], require_all=False)
+    assert authoriser.is_authorised(mock_user) is True
 
 
 # Tests for Authoriser.from_lists()
 
 
-def test_from_lists_creates_authorizer_with_groups():
-    """from_lists creates authorizer with group rules"""
-    authorizer = Authoriser.from_lists(allowed_groups=["developers", "admins"])
-    assert len(authorizer.rules) == 1
-    assert isinstance(authorizer.rules[0], GroupRule)
+def test_from_lists_creates_authoriser_with_groups():
+    """from_lists creates authoriser with group rules"""
+    authoriser = Authoriser.from_lists(allowed_groups=["developers", "admins"])
+    assert len(authoriser.rules) == 1
+    assert isinstance(authoriser.rules[0], GroupRule)
 
 
-def test_from_lists_creates_authorizer_with_users():
-    """from_lists creates authorizer with email rules"""
-    authorizer = Authoriser.from_lists(allowed_users=["test@example.com"])
-    assert len(authorizer.rules) == 1
-    assert isinstance(authorizer.rules[0], EmailRule)
+def test_from_lists_creates_authoriser_with_users():
+    """from_lists creates authoriser with email rules"""
+    authoriser = Authoriser.from_lists(allowed_users=["test@example.com"])
+    assert len(authoriser.rules) == 1
+    assert isinstance(authoriser.rules[0], EmailRule)
 
 
-def test_from_lists_creates_authorizer_with_both(mock_user):
-    """from_lists creates authorizer with both rule types"""
-    authorizer = Authoriser.from_lists(
+def test_from_lists_creates_authoriser_with_both(mock_user):
+    """from_lists creates authoriser with both rule types"""
+    authoriser = Authoriser.from_lists(
         allowed_groups=["developers"],
         allowed_users=["admin@example.com"],
     )
-    assert len(authorizer.rules) == 2
+    assert len(authoriser.rules) == 2
     # Should use OR logic by default
-    assert authorizer.is_authorised(mock_user) is True
+    assert authoriser.is_authorised(mock_user) is True
 
 
 def test_from_lists_respects_require_all_flag(mock_user):
     """from_lists respects require_all flag"""
-    authorizer = Authoriser.from_lists(
+    authoriser = Authoriser.from_lists(
         allowed_groups=["developers"],
         allowed_users=["other@example.com"],
         require_all=True,
     )
     # User is in developers group but email doesn't match
-    assert authorizer.is_authorised(mock_user) is False
+    assert authoriser.is_authorised(mock_user) is False
 
 
-def test_from_lists_with_no_params_creates_empty_authorizer():
-    """from_lists with no parameters creates authorizer with no rules"""
-    authorizer = Authoriser.from_lists()
-    assert len(authorizer.rules) == 0
+def test_from_lists_with_no_params_creates_empty_authoriser():
+    """from_lists with no parameters creates authoriser with no rules"""
+    authoriser = Authoriser.from_lists()
+    assert len(authoriser.rules) == 0
 
 
-def test_from_lists_with_none_params_creates_empty_authorizer():
-    """from_lists with None parameters creates authorizer with no rules"""
-    authorizer = Authoriser.from_lists(
+def test_from_lists_with_none_params_creates_empty_authoriser():
+    """from_lists with None parameters creates authoriser with no rules"""
+    authoriser = Authoriser.from_lists(
         allowed_groups=None,
         allowed_users=None,
     )
-    assert len(authorizer.rules) == 0
+    assert len(authoriser.rules) == 0
 
 
 # Integration tests with multiple users
 
 
-def test_authorizer_allows_different_users_with_or_logic(
+def test_authoriser_allows_different_users_with_or_logic(
     mock_user, mock_admin_user, suppress_warnings
 ):
     """OR logic allows users matching different rules"""
-    authorizer = Authoriser.from_lists(
+    authoriser = Authoriser.from_lists(
         allowed_groups=["developers"],
         allowed_users=["admin@example.com"],
         require_all=False,
     )
     # mock_user matches group rule
-    assert authorizer.is_authorised(mock_user) is True
+    assert authoriser.is_authorised(mock_user) is True
     # mock_admin_user matches email rule
-    assert authorizer.is_authorised(mock_admin_user) is True
+    assert authoriser.is_authorised(mock_admin_user) is True
 
 
-def test_authorizer_requires_both_rules_with_and_logic(
+def test_authoriser_requires_both_rules_with_and_logic(
     mock_user, mock_admin_user, suppress_warnings
 ):
     """AND logic requires all rules to pass"""
-    authorizer = Authoriser.from_lists(
+    authoriser = Authoriser.from_lists(
         allowed_groups=["developers"],
         allowed_users=["test@example.com"],
         require_all=True,
     )
     # mock_user matches both rules
-    assert authorizer.is_authorised(mock_user) is True
+    assert authoriser.is_authorised(mock_user) is True
     # mock_admin_user only matches neither rule
-    assert authorizer.is_authorised(mock_admin_user) is False
+    assert authoriser.is_authorised(mock_admin_user) is False
 
 
-def test_authorizer_denies_unauthenticated_user(suppress_warnings):
-    """Authorizer denies unauthenticated users regardless of rules"""
+def test_authoriser_denies_unauthenticated_user(suppress_warnings):
+    """Authoriser denies unauthenticated users regardless of rules"""
     user = User.create_mock(email="test@example.com", groups=["developers"])
     # Manually set authenticated to False
     user._is_authenticated = False
 
-    authorizer = Authoriser.from_lists(allowed_groups=["developers"])
-    assert authorizer.is_authorised(user) is False
+    authoriser = Authoriser.from_lists(allowed_groups=["developers"])
+    assert authoriser.is_authorised(user) is False
 
 
 # Tests for Authoriser.from_config()
@@ -333,9 +333,9 @@ def test_from_config_loads_from_file(tmp_path):
     }))
 
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
-        authorizer = Authoriser.from_config()
-        assert len(authorizer.rules) == 2
-        assert authorizer.require_all is False
+        authoriser = Authoriser.from_config()
+        assert len(authoriser.rules) == 2
+        assert authoriser.require_all is False
 
 
 def test_from_config_validates_emails(tmp_path):
@@ -410,9 +410,9 @@ def test_from_config_aws_secrets(mock_user, suppress_warnings):
             {"COGNITO_AUTH_SECRET_NAME": "my-app/auth-config"},
             clear=True
         ):
-            authorizer = Authoriser.from_config()
+            authoriser = Authoriser.from_config()
 
-            assert len(authorizer.rules) == 2
+            assert len(authoriser.rules) == 2
             mock_boto3_client.assert_called_once_with("secretsmanager")
             mock_client.get_secret_value.assert_called_once_with(
                 SecretId="my-app/auth-config"
@@ -429,8 +429,8 @@ def test_from_config_respects_require_all(tmp_path):
     }))
 
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
-        authorizer = Authoriser.from_config()
-        assert authorizer.require_all is True
+        authoriser = Authoriser.from_config()
+        assert authoriser.require_all is True
 
 
 # Tests for TTL caching
@@ -449,13 +449,13 @@ def test_from_config_caches_result(tmp_path):
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
     ):
         # First call
-        authorizer1 = Authoriser.from_config()
+        authoriser1 = Authoriser.from_config()
 
         # Second call should return same cached instance
-        authorizer2 = Authoriser.from_config()
+        authoriser2 = Authoriser.from_config()
 
         # Should be the exact same object (cached)
-        assert authorizer1 is authorizer2
+        assert authoriser1 is authoriser2
 
 
 def test_clear_config_cache_forces_reload(tmp_path):
@@ -471,16 +471,16 @@ def test_clear_config_cache_forces_reload(tmp_path):
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
     ):
         # First call
-        authorizer1 = Authoriser.from_config()
+        authoriser1 = Authoriser.from_config()
 
         # Clear cache
         Authoriser.clear_config_cache()
 
         # Second call should create new instance
-        authorizer2 = Authoriser.from_config()
+        authoriser2 = Authoriser.from_config()
 
         # Should be different objects
-        assert authorizer1 is not authorizer2
+        assert authoriser1 is not authoriser2
 
 
 def test_from_config_cache_with_file_change(tmp_path):
@@ -496,8 +496,8 @@ def test_from_config_cache_with_file_change(tmp_path):
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
     ):
         # First call
-        authorizer1 = Authoriser.from_config()
-        assert len(authorizer1.rules) == 2
+        authoriser1 = Authoriser.from_config()
+        assert len(authoriser1.rules) == 2
 
         # Update config file
         config_file.write_text(json.dumps({
@@ -507,10 +507,10 @@ def test_from_config_cache_with_file_change(tmp_path):
         }))
 
         # Without clearing cache, should still get old config
-        authorizer2 = Authoriser.from_config()
-        assert authorizer1 is authorizer2
+        authoriser2 = Authoriser.from_config()
+        assert authoriser1 is authoriser2
 
         # After clearing cache, should get new config
         Authoriser.clear_config_cache()
-        authorizer3 = Authoriser.from_config()
-        assert authorizer1 is not authorizer3
+        authoriser3 = Authoriser.from_config()
+        assert authoriser1 is not authoriser3

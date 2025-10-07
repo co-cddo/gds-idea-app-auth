@@ -63,15 +63,6 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
-      - Configuration: getting-started/configuration.md
-  - Framework Guides:
-      - Streamlit: frameworks/streamlit.md
-      - Dash & Flask: frameworks/dash.md
-      - FastAPI: frameworks/fastapi.md
-      - Gradio: frameworks/gradio.md
   - API Reference:
       - User: api/user.md
       - Authoriser: api/authoriser.md
@@ -80,6 +71,3 @@ nav:
       - FastAPIAuth: api/fastapi-auth.md
       - GradioAuth: api/gradio-auth.md
       - Exceptions: api/exceptions.md
-  - Advanced:
-      - Development Mode: advanced/dev-mode.md
-      - Custom Authorisation Rules: advanced/custom-rules.md

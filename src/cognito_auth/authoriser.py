@@ -115,9 +115,9 @@ class Authoriser:
         allowed_groups: list[str] | None = None,
         allowed_users: list[str] | None = None,
         require_all: bool = False,
-    ) -> "Authorizer":
+    ) -> "Authoriser":
         """
-        Create an Authorizer from simple lists of allowed values.
+        Create an Authoriser from simple lists of allowed values.
 
         Args:
             allowed_groups: List of allowed Cognito groups
@@ -125,7 +125,7 @@ class Authoriser:
             require_all: If True, ALL rules must pass. If False, ANY rule passes.
 
         Returns:
-            Authorizer instance with the specified rules
+            Authoriser instance with the specified rules
         """
         rules: list[AuthorisationRule] = []
 
@@ -139,9 +139,9 @@ class Authoriser:
 
     @classmethod
     @cached(cache=_config_cache)
-    def from_config(cls) -> "Authorizer":
+    def from_config(cls) -> "Authoriser":
         """
-        Create an Authorizer from configuration with automatic TTL caching.
+        Create an Authoriser from configuration with automatic TTL caching.
 
         Config is cached for 5 minutes to allow adding new users without restarting.
         Call clear_config_cache() to force immediate reload.
@@ -158,7 +158,7 @@ class Authoriser:
         }
 
         Returns:
-            Authorizer instance configured from the loaded settings
+            Authoriser instance configured from the loaded settings
 
         Raises:
             ValueError: If neither environment variable is set or config is invalid
@@ -166,11 +166,11 @@ class Authoriser:
         Example:
             # Development
             export COGNITO_AUTH_CONFIG_PATH=./auth-config.json
-            authorizer = Authoriser.from_config()
+            authoriser = Authoriser.from_config()
 
             # Production
             export COGNITO_AUTH_SECRET_NAME=my-app/auth-config
-            authorizer = Authoriser.from_config()
+            authoriser = Authoriser.from_config()
         """
         config_path = os.getenv("COGNITO_AUTH_CONFIG_PATH")
         secret_name = os.getenv("COGNITO_AUTH_SECRET_NAME")
