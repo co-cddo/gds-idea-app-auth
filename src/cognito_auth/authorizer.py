@@ -230,21 +230,21 @@ class Authorizer:
                 f"(secret: {secret_name}): {e}"
             ) from e
 
+    @classmethod
+    def clear_config_cache(cls) -> None:
+        """
+        Manually clear the config cache to force immediate reload.
 
-def clear_config_cache() -> None:
-    """
-    Manually clear the config cache to force immediate reload.
+        Useful when you need to apply config changes immediately without
+        waiting for the 5-minute TTL to expire.
 
-    Useful when you need to apply config changes immediately without
-    waiting for the 5-minute TTL to expire.
+        Example:
+            from cognito_auth import Authorizer
 
-    Example:
-        from cognito_auth.authorizer import clear_config_cache
+            # After updating secret in AWS
+            Authorizer.clear_config_cache()
 
-        # After updating secret in AWS
-        clear_config_cache()
-
-        # Next call will fetch fresh config
-        guard = AuthGuard.from_config()
-    """
-    _config_cache.clear()
+            # Next call will fetch fresh config
+            guard = AuthGuard.from_config()
+        """
+        _config_cache.clear()

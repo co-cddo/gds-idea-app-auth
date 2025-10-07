@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cognito_auth import User, clear_config_cache
-from cognito_auth.authorizer import Authorizer, EmailRule, GroupRule
+from cognito_auth import Authorizer, User
+from cognito_auth.authorizer import EmailRule, GroupRule
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def suppress_warnings():
 @pytest.fixture(autouse=True)
 def clear_cache_before_test():
     """Automatically clear config cache before each test"""
-    clear_config_cache()
+    Authorizer.clear_config_cache()
     return
 
 
@@ -474,7 +474,7 @@ def test_clear_config_cache_forces_reload(tmp_path):
         authorizer1 = Authorizer.from_config()
 
         # Clear cache
-        clear_config_cache()
+        Authorizer.clear_config_cache()
 
         # Second call should create new instance
         authorizer2 = Authorizer.from_config()
@@ -511,6 +511,6 @@ def test_from_config_cache_with_file_change(tmp_path):
         assert authorizer1 is authorizer2
 
         # After clearing cache, should get new config
-        clear_config_cache()
+        Authorizer.clear_config_cache()
         authorizer3 = Authorizer.from_config()
         assert authorizer1 is not authorizer3
