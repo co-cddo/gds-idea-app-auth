@@ -141,7 +141,7 @@ class User:
         groups: list[str] | None = None,
         email_verified: bool = True,
         region: str = "eu-west-2",
-        **extra_claims,
+        **extra_claims: Any,
     ) -> "User":
         """
         Create a mock user for development and testing.

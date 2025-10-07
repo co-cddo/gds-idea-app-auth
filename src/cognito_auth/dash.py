@@ -2,7 +2,9 @@
 Dash and Flask authentication module.
 """
 
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 from dash import Dash
 from flask import Flask, g, redirect, request
@@ -131,7 +133,7 @@ class DashAuth(BaseAuth):
 
         return user
 
-    def require_auth(self, func):
+    def require_auth(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Decorator to protect individual Flask routes.
 
@@ -153,7 +155,7 @@ class DashAuth(BaseAuth):
         """
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 headers = dict(request.headers)
                 user = self._get_user_from_headers(headers)
