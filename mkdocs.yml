@@ -1,0 +1,85 @@
+site_name: cognito-auth
+site_description: AWS Cognito authentication for Python web frameworks
+site_author: David Gillespie
+repo_url: https://github.com/your-org/cognito-auth
+repo_name: cognito-auth
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            group_by_category: true
+            show_category_heading: true
+            show_if_no_docstring: false
+            inherited_members: false
+            filters:
+              - "!^_"  # Exclude private members
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+  - Framework Guides:
+      - Streamlit: frameworks/streamlit.md
+      - Dash & Flask: frameworks/dash.md
+      - FastAPI: frameworks/fastapi.md
+      - Gradio: frameworks/gradio.md
+  - API Reference:
+      - User: api/user.md
+      - Authorizer: api/authorizer.md
+      - StreamlitAuth: api/streamlit-auth.md
+      - DashAuth: api/dash-auth.md
+      - FastAPIAuth: api/fastapi-auth.md
+      - GradioAuth: api/gradio-auth.md
+      - Exceptions: api/exceptions.md
+  - Advanced:
+      - Development Mode: advanced/dev-mode.md
+      - Custom Authorization Rules: advanced/custom-rules.md
