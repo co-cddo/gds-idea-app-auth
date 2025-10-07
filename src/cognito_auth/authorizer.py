@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Any, Protocol
 
+from cachetools import TTLCache, cached
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -12,6 +13,9 @@ from pydantic import (
 )
 
 from .user import User
+
+# TTL cache for config loading - 5 minutes
+_config_cache = TTLCache(maxsize=1, ttl=300)
 
 
 class AuthConfig(BaseModel):
@@ -134,9 +138,13 @@ class Authorizer:
         return cls(rules, require_all=require_all)
 
     @classmethod
+    @cached(cache=_config_cache)
     def from_config(cls) -> "Authorizer":
         """
-        Create an Authorizer from configuration.
+        Create an Authorizer from configuration with automatic TTL caching.
+
+        Config is cached for 5 minutes to allow adding new users without restarting.
+        Call clear_config_cache() to force immediate reload.
 
         Requires one of these environment variables:
         - COGNITO_AUTH_CONFIG_PATH: Path to local JSON file (development)
@@ -221,3 +229,22 @@ class Authorizer:
                 f"Failed to load config from AWS Secrets Manager "
                 f"(secret: {secret_name}): {e}"
             ) from e
+
+
+def clear_config_cache() -> None:
+    """
+    Manually clear the config cache to force immediate reload.
+
+    Useful when you need to apply config changes immediately without
+    waiting for the 5-minute TTL to expire.
+
+    Example:
+        from cognito_auth.authorizer import clear_config_cache
+
+        # After updating secret in AWS
+        clear_config_cache()
+
+        # Next call will fetch fresh config
+        guard = AuthGuard.from_config()
+    """
+    _config_cache.clear()

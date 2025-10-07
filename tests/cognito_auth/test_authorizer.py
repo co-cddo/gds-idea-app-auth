@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cognito_auth import User
+from cognito_auth import User, clear_config_cache
 from cognito_auth.authorizer import Authorizer, EmailRule, GroupRule
 
 
@@ -15,6 +15,13 @@ def suppress_warnings():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         yield
+
+
+@pytest.fixture(autouse=True)
+def clear_cache_before_test():
+    """Automatically clear config cache before each test"""
+    clear_config_cache()
+    return
 
 
 @pytest.fixture
@@ -424,3 +431,86 @@ def test_from_config_respects_require_all(tmp_path):
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
         authorizer = Authorizer.from_config()
         assert authorizer.require_all is True
+
+
+# Tests for TTL caching
+
+
+def test_from_config_caches_result(tmp_path):
+    """from_config caches result and doesn't reload within TTL"""
+    config_file = tmp_path / "auth-config.json"
+    config_file.write_text(json.dumps({
+        "allowed_groups": ["developers"],
+        "allowed_users": ["user@example.com"],
+        "require_all": False
+    }))
+
+    with patch.dict(
+        os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+    ):
+        # First call
+        authorizer1 = Authorizer.from_config()
+
+        # Second call should return same cached instance
+        authorizer2 = Authorizer.from_config()
+
+        # Should be the exact same object (cached)
+        assert authorizer1 is authorizer2
+
+
+def test_clear_config_cache_forces_reload(tmp_path):
+    """clear_config_cache forces immediate reload"""
+    config_file = tmp_path / "auth-config.json"
+    config_file.write_text(json.dumps({
+        "allowed_groups": ["developers"],
+        "allowed_users": ["user@example.com"],
+        "require_all": False
+    }))
+
+    with patch.dict(
+        os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+    ):
+        # First call
+        authorizer1 = Authorizer.from_config()
+
+        # Clear cache
+        clear_config_cache()
+
+        # Second call should create new instance
+        authorizer2 = Authorizer.from_config()
+
+        # Should be different objects
+        assert authorizer1 is not authorizer2
+
+
+def test_from_config_cache_with_file_change(tmp_path):
+    """Config reload picks up changes after cache clear"""
+    config_file = tmp_path / "auth-config.json"
+    config_file.write_text(json.dumps({
+        "allowed_groups": ["developers"],
+        "allowed_users": ["user@example.com"],
+        "require_all": False
+    }))
+
+    with patch.dict(
+        os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+    ):
+        # First call
+        authorizer1 = Authorizer.from_config()
+        assert len(authorizer1.rules) == 2
+
+        # Update config file
+        config_file.write_text(json.dumps({
+            "allowed_groups": ["admins", "developers", "users"],
+            "allowed_users": ["user@example.com"],
+            "require_all": False
+        }))
+
+        # Without clearing cache, should still get old config
+        authorizer2 = Authorizer.from_config()
+        assert authorizer1 is authorizer2
+
+        # After clearing cache, should get new config
+        clear_config_cache()
+        authorizer3 = Authorizer.from_config()
+        assert authorizer1 is not authorizer3

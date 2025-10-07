@@ -2,10 +2,20 @@ import time
 from typing import Any
 
 import requests
+from cachetools import TTLCache
 from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
 from .exceptions import ExpiredTokenError, InvalidTokenError
+
+# Cache size constants
+# ALB keys: AWS typically maintains 2-3 active keys for rotation at any time
+# Setting to 10 provides headroom for multiple key rotations
+_ALB_KEYS_CACHE_SIZE = 10
+
+# Cognito JWKS: Single tenant apps typically use 1 User Pool (1 issuer)
+# Setting to 5 provides headroom for testing/development environments
+_COGNITO_JWKS_CACHE_SIZE = 5
 
 
 class TokenVerifier:
@@ -21,9 +31,13 @@ class TokenVerifier:
         """
         self.region = region
         self.cache_ttl = cache_ttl
-        self._alb_keys_cache: dict[str, Any] = {}
-        self._cognito_jwks_cache: dict[str, Any] = {}
-        self._cache_timestamp = 0
+        # Separate TTL caches for ALB and Cognito keys
+        self._alb_keys_cache: TTLCache = TTLCache(
+            maxsize=_ALB_KEYS_CACHE_SIZE, ttl=cache_ttl
+        )
+        self._cognito_jwks_cache: TTLCache = TTLCache(
+            maxsize=_COGNITO_JWKS_CACHE_SIZE, ttl=cache_ttl
+        )
 
     def _fetch_alb_public_key(self, key_id: str) -> str:
         """Fetch ALB public key from AWS"""
@@ -49,17 +63,12 @@ class TokenVerifier:
 
     def _get_cognito_public_key(self, token: str, issuer: str) -> dict[str, Any]:
         """Get the appropriate public key for a Cognito token"""
-        # Check cache
-        current_time = time.time()
-        if (
-            issuer in self._cognito_jwks_cache
-            and current_time - self._cache_timestamp < self.cache_ttl
-        ):
+        # Check cache (TTL handled automatically by TTLCache)
+        if issuer in self._cognito_jwks_cache:
             jwks = self._cognito_jwks_cache[issuer]
         else:
             jwks = self._fetch_cognito_jwks(issuer)
             self._cognito_jwks_cache[issuer] = jwks
-            self._cache_timestamp = current_time
 
         # Get key ID from token header
         try:
@@ -137,12 +146,12 @@ class TokenVerifier:
             if not key_id:
                 raise InvalidTokenError("ALB token missing 'kid' in header")
 
-            # Get or fetch public key
-            if key_id not in self._alb_keys_cache:
+            # Get or fetch public key (TTL handled automatically by TTLCache)
+            if key_id in self._alb_keys_cache:
+                public_key_pem = self._alb_keys_cache[key_id]
+            else:
                 public_key_pem = self._fetch_alb_public_key(key_id)
                 self._alb_keys_cache[key_id] = public_key_pem
-            else:
-                public_key_pem = self._alb_keys_cache[key_id]
 
             # Verify and decode token
             claims = jwt.decode(
@@ -163,3 +172,12 @@ class TokenVerifier:
             raise ExpiredTokenError("ALB token has expired") from e
         except JWTError as e:
             raise InvalidTokenError(f"ALB token verification failed: {e}") from e
+
+    def clear_cache(self) -> None:
+        """
+        Clear all cached public keys.
+
+        Useful for testing or forcing fresh key fetches.
+        """
+        self._alb_keys_cache.clear()
+        self._cognito_jwks_cache.clear()
