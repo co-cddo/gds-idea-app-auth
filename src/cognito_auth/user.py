@@ -62,7 +62,9 @@ class User:
             )
         else:
             # Decode without verification (not recommended for production)
-            logger.warning("Decoding tokens without verification - NOT recommended for production")
+            logger.warning(
+                "Decoding tokens without verification - NOT recommended for production"
+            )
             self._oidc_claims = jwt.get_unverified_claims(oidc_data_header)
             self._access_claims = jwt.get_unverified_claims(access_token_header)
 
@@ -72,7 +74,7 @@ class User:
             "User authenticated: email=%s, groups=%s, sub=%s",
             self._oidc_claims.get("email", "N/A"),
             self._access_claims.get("cognito:groups", []),
-            self._oidc_claims.get("sub", "N/A")
+            self._oidc_claims.get("sub", "N/A"),
         )
 
     @property
@@ -194,7 +196,9 @@ class User:
 
         # Load config from JSON if present
         config = cls._load_dev_config()
-        logger.debug("Mock user config loaded: %s", config.keys() if config else "empty")
+        logger.debug(
+            "Mock user config loaded: %s", config.keys() if config else "empty"
+        )
 
         # Merge provided values with config and defaults
         email = email or config.get("email", "dev@example.com")
@@ -243,10 +247,7 @@ class User:
         instance._is_authenticated = True
 
         logger.info(
-            "Mock user created: email=%s, groups=%s, sub=%s",
-            email,
-            groups,
-            sub
+            "Mock user created: email=%s, groups=%s, sub=%s", email, groups, sub
         )
 
         return instance

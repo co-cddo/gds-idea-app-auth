@@ -77,7 +77,7 @@ class GroupRule:
             "GroupRule check: user_groups=%s, allowed_groups=%s, result=%s",
             user_groups,
             self.allowed_groups,
-            allowed
+            allowed,
         )
         return allowed
 
@@ -90,11 +90,7 @@ class EmailRule:
 
     def is_allowed(self, user: User) -> bool:
         allowed = user.email in self.allowed_emails
-        logger.debug(
-            "EmailRule check: user_email=%s, allowed=%s",
-            user.email,
-            allowed
-        )
+        logger.debug("EmailRule check: user_email=%s, allowed=%s", user.email, allowed)
         return allowed
 
 
@@ -115,7 +111,7 @@ class Authoriser:
         logger.debug(
             "Checking authorisation for user: email=%s, groups=%s",
             user.email,
-            user.groups
+            user.groups,
         )
 
         if not user.is_authenticated:
@@ -127,7 +123,9 @@ class Authoriser:
             return True  # No rules = allow all authenticated users
 
         results = [rule.is_allowed(user) for rule in self.rules]
-        logger.debug("Rule evaluation results: %s (require_all=%s)", results, self.require_all)
+        logger.debug(
+            "Rule evaluation results: %s (require_all=%s)", results, self.require_all
+        )
 
         if self.require_all:
             authorised = all(results)
@@ -137,7 +135,9 @@ class Authoriser:
         if authorised:
             logger.info("User authorised: email=%s, groups=%s", user.email, user.groups)
         else:
-            logger.warning("User denied access: email=%s, groups=%s", user.email, user.groups)
+            logger.warning(
+                "User denied access: email=%s, groups=%s", user.email, user.groups
+            )
 
         return authorised
 
@@ -210,7 +210,7 @@ class Authoriser:
         logger.debug(
             "Loading authoriser config: config_path=%s, secret_name=%s",
             config_path or "not set",
-            secret_name or "not set"
+            secret_name or "not set",
         )
 
         if config_path:
@@ -222,7 +222,10 @@ class Authoriser:
             logger.info("Loading config from AWS Secrets Manager: %s", secret_name)
             raw_config = cls._load_from_aws_secrets(secret_name)
         else:
-            logger.error("No config source specified (COGNITO_AUTH_CONFIG_PATH or COGNITO_AUTH_SECRET_NAME)")
+            logger.error(
+                "No config source specified "
+                "(COGNITO_AUTH_CONFIG_PATH or COGNITO_AUTH_SECRET_NAME)"
+            )
             raise ValueError(
                 "Must set either COGNITO_AUTH_CONFIG_PATH (for local file) "
                 "or COGNITO_AUTH_SECRET_NAME (for AWS Secrets Manager)"
@@ -233,10 +236,11 @@ class Authoriser:
         config = AuthConfig.model_validate(raw_config)
 
         logger.info(
-            "Authoriser config loaded: allowed_groups=%s, allowed_users=%s, require_all=%s",
+            "Authoriser config loaded: allowed_groups=%s, "
+            "allowed_users=%s, require_all=%s",
             config.allowed_groups,
             len(config.allowed_users) if config.allowed_users else 0,
-            config.require_all
+            config.require_all,
         )
 
         return cls.from_lists(
@@ -282,7 +286,11 @@ class Authoriser:
             logger.debug("Successfully loaded config from AWS Secrets Manager")
             return config
         except Exception as e:
-            logger.error("Failed to load config from AWS Secrets Manager (secret: %s): %s", secret_name, e)
+            logger.error(
+                "Failed to load config from AWS Secrets Manager (secret: %s): %s",
+                secret_name,
+                e,
+            )
             raise RuntimeError(
                 f"Failed to load config from AWS Secrets Manager "
                 f"(secret: {secret_name}): {e}"
