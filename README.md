@@ -19,7 +19,7 @@ user = auth.get_auth_user()
 
 ## Documentation
 
-Full documentation available at [github pages](co-cddo.github.io/gds-idea-app-auth).
+Full documentation available at [github pages](https://co-cddo.github.io/gds-idea-app-auth).
 
 ## Contributing
 
@@ -54,7 +54,7 @@ uv run pytest -k test_authoriser
 
 ### Code Standards
 
-- Python 3.13+
+- Python 3.12+
 - Type hints where appropriate
 - Ruff for linting and formatting (configured in `pyproject.toml`)
 - 100% test coverage for new features
