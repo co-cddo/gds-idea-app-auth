@@ -19,7 +19,7 @@ user = guard.streamlit()  # or dash(), fastapi(), etc.
 
 ## Documentation
 
-Full documentation available at [docs site URL].
+Full documentation available at co-cddo.github.io/gds-idea-app-auth.
 
 ## Contributing
 
@@ -27,7 +27,7 @@ Full documentation available at [docs site URL].
 
 ```bash
 # Clone and install dependencies
-git clone <repo-url>
+git clone https://github.com/co-cddo/gds-idea-app-auth/
 cd cognito-auth
 uv sync
 ```

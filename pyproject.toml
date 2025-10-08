@@ -7,7 +7,7 @@ authors = [
     { name = "David Gillespie", email = "david.gillespie@digital.cabinet-office.gov.uk" }
 ]
 license = { text = "MIT" }
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "python-jose>=3.5.0",
     "requests>=2.32.5",
@@ -28,9 +28,6 @@ all = [
     "fastapi>=0.100.0",
     "gradio>=4.0.0",
 ]
-
-[project.scripts]
-cognito-auth = "cognito_auth:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -82,7 +79,7 @@ exclude_lines = [
 
 [tool.ruff]
 # Target Python version (e.g., Python 3.10)
-target-version = "py313"
+target-version = "py312"
 
 # Exclude files or directories
 exclude = [

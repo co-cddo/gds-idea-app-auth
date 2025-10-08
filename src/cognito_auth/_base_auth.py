@@ -27,7 +27,8 @@ class BaseAuth:
         region: str = "eu-west-2",
     ):
         """
-        Initialize auth. Auto-loads from environment variables if no authoriser provided.
+        Initialize auth. Auto-loads from environment variables if no
+        authoriser provided.
 
         Environment variables:
         - COGNITO_AUTH_CONFIG_PATH: Local JSON file (development)

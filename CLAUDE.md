@@ -22,7 +22,7 @@ This project uses `uv` for dependency management:
 - `uv run ruff check . --fix` - Auto-fix linting issues
 - `uv run ruff format .` - Format code
 
-Ruff is configured in `pyproject.toml` with rules: E (Pycodestyle), F (Pyflakes), I (isort), B (Bugbear), UP (Pyupgrade), N (pep8-naming), A (flake8-builtins), PT (pytest style). Line length (E501) is ignored.
+Ruff is configured in `pyproject.toml` with rules: E (Pycodestyle), F (Pyflakes), I (isort), B (Bugbear), UP (Pyupgrade), N (pep8-naming), A (flake8-builtins), PT (pytest style).
 
 ### Testing
 - `uv run pytest` - Run all tests
@@ -55,39 +55,42 @@ Tests use pytest fixtures and mock User creation for isolation.
    - Can create custom rules by implementing `AuthorisationRule` protocol
    - Note: Domain-based authorisation is not needed as domains are used at signup to assign groups
 
-4. **AuthGuard** (`guard.py`)
-   - Unified interface for protecting apps across frameworks
-   - Methods: `streamlit()`, `dash()`, `fastapi()`, `get_current_user_gradio()`, `gradio_middleware()`
-   - Factory methods: `from_s3()`, `from_secrets()`, `from_parameter_store()`
+4. **Framework Auth Classes** (`_base_auth.py`, `streamlit.py`, `dash.py`, `fastapi.py`, `gradio.py`)
+   - `_base_auth.py`: Base authentication class with common functionality
+   - Separate auth classes for each framework (StreamlitAuth, DashAuth, FastAPIAuth, GradioAuth)
+   - Factory methods: `from_config()` (auto-detects local file vs AWS Secrets Manager)
    - Handles both authentication (token verification) and authorisation (rule checking)
    - Redirects to `redirect_url` on auth failure (default: https://gds-idea.click/401.html)
 
 ### Authentication Flow
 
 1. ALB intercepts requests and adds OIDC headers after Cognito authentication
-2. `AuthGuard` extracts headers via framework-specific methods
+2. Framework-specific auth class extracts headers via framework-specific methods
 3. `User` is instantiated, which triggers `TokenVerifier` to verify both tokens
 4. If tokens valid, `Authoriser` checks if user meets authorisation rules
 5. If authorised, user object is returned; otherwise, redirect or raise exception
 
 ### Framework Integration Patterns
 
-- **Streamlit**: Call `guard.streamlit()` at app start, uses `st.context.headers`
-- **Dash**: Decorate app creation with `@guard.dash`, get user via `guard.get_current_user_dash()` in callbacks
-- **FastAPI**: Use `Depends(guard.fastapi())` in route parameters
-- **Gradio**: Use `guard.get_current_user_gradio(request)` in functions or `guard.gradio_middleware()` for FastAPI+Gradio apps
+- **Streamlit**: Instantiate `StreamlitAuth` and call `get_auth_user()` at app start, uses `st.context.headers`
+- **Dash**: Instantiate `DashAuth` and use `@auth.require_auth` decorator on app creation, get user via `get_auth_user()` in callbacks
+- **FastAPI**: Instantiate `FastAPIAuth` and use `Depends(auth.get_auth_user)` in route parameters
+- **Gradio**: Instantiate `GradioAuth` and use `get_auth_user(request)` in functions or apply via middleware
 
 ## Package Structure
 
 ```
 src/cognito_auth/
-├── __init__.py          # Public API: User, exceptions
+├── __init__.py          # Public API: User, Authoriser, exceptions
 ├── user.py              # User model with token claims
 ├── token_verifier.py    # JWT verification logic
 ├── authoriser.py        # Authorisation rules engine
-├── guard.py             # Framework-specific auth guards
-├── exceptions.py        # Custom exceptions
-└── helpers/             # Framework-specific helper utilities (empty currently)
+├── _base_auth.py        # Base authentication class
+├── streamlit.py         # Streamlit auth integration
+├── dash.py              # Dash auth integration
+├── fastapi.py           # FastAPI auth integration
+├── gradio.py            # Gradio auth integration
+└── exceptions.py        # Custom exceptions
 ```
 
 ## Configuration Management
@@ -98,11 +101,11 @@ The package supports seamless configuration loading for dev and production envir
 
 **Same code works in both environments:**
 ```python
-from cognito_auth import AuthGuard
+from cognito_auth.streamlit import StreamlitAuth
 
 # Works in development AND production
-guard = AuthGuard.from_config()
-user = guard.streamlit()
+auth = StreamlitAuth.from_config()
+user = auth.get_auth_user()
 ```
 
 ### Configuration File Format
@@ -169,10 +172,12 @@ For local development without ALB/Cognito headers:
    ```
    See `dev-mock-user.example.json` for template.
 
-3. **Use AuthGuard normally** - it will automatically use mock users when headers are missing:
+3. **Use auth classes normally** - they will automatically use mock users when headers are missing:
    ```python
-   guard = AuthGuard(allowed_groups=['developers'])
-   user = guard.streamlit()  # Returns mock user in dev mode
+   from cognito_auth.streamlit import StreamlitAuth
+
+   auth = StreamlitAuth(allowed_groups=['developers'])
+   user = auth.get_auth_user()  # Returns mock user in dev mode
    ```
 
 **Important:** Dev mode warnings are displayed via Python's `warnings` module. Never enable in production.
@@ -195,7 +200,30 @@ user = User.create_mock(
 
 ## Important Notes
 
-- Requires Python 3.13+
+- Requires Python 3.12+
 - AWS region defaults to `eu-west-2` but is configurable
 - In real Cognito tokens, `username` is a UUID (same as `sub`), so `email` is the primary human-readable identifier
 - Authorisation is group-based only - domains are handled at signup to assign users to appropriate groups
+
+## CI/CD
+
+### GitHub Actions Workflows
+
+The project includes two GitHub Actions workflows:
+
+1. **PR Checks** (`.github/workflows/pr-checks.yml`)
+   - Runs on PRs to main and dev branches
+   - Checks version has been bumped in `pyproject.toml`
+   - Runs linting (ruff check and format)
+   - Tests on Python 3.12, 3.13, and 3.14
+   - Builds documentation with `mkdocs build --strict`
+   - Builds package with `uv build`
+
+2. **Release** (`.github/workflows/release.yml`)
+   - Runs on push to main branch
+   - Builds and deploys documentation to GitHub Pages
+   - Creates GitHub Release with auto-generated notes
+   - Tags release with version from `pyproject.toml`
+   - Attaches built package artifacts to release
+
+**Important:** All PRs must bump the version in `pyproject.toml` or the PR checks will fail.

@@ -48,13 +48,22 @@ class StreamlitAuth(BaseAuth):
             user = self._get_user_from_headers(dict(headers))
 
             if not self._is_authorised(user):
-                st.error("🔒 Access denied. You don't have permission to access this application.")
-                st.info("Please contact your administrator if you believe this is an error.")
+                st.error(
+                    "🔒 Access denied. You don't have permission to access "
+                    "this application."
+                )
+                st.info(
+                    "Please contact your administrator if you believe this "
+                    "is an error."
+                )
                 st.stop()
 
             return user
 
         except Exception:
             st.error("🔒 Authentication failed.")
-            st.info("Unable to verify your identity. Please try again or contact support.")
+            st.info(
+                "Unable to verify your identity. Please try again or "
+                "contact support."
+            )
             st.stop()

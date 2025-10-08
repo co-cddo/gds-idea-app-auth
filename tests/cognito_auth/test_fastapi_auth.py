@@ -101,7 +101,7 @@ def test_get_auth_user_retrieves_from_request_state_when_protect_app_used(tmp_pa
         auth = FastAPIAuth()
 
         @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):
+        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
             return {"email": user.email}
 
         with (
@@ -136,7 +136,7 @@ def test_get_auth_user_validates_on_demand_without_protect_app(tmp_path):
         # Note: NOT calling protect_app()
 
         @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):
+        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
             return {"email": user.email}
 
         with (
@@ -169,7 +169,7 @@ def test_get_auth_user_raises_http_exception_when_unauthorised(tmp_path):
         auth = FastAPIAuth()
 
         @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):
+        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
             return {"email": user.email}
 
         with (
@@ -200,7 +200,7 @@ def test_get_auth_user_raises_http_exception_on_auth_failure(tmp_path):
         auth = FastAPIAuth()
 
         @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):
+        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
             return {"email": user.email}
 
         with patch.object(

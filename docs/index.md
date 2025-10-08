@@ -119,6 +119,6 @@ Optionally customize the mock user with `dev-mock-user.json`:
 }
 ```
 
-## Next Steps
-
+## Other
+- [github](https://co-cddo.github.io/gds-idea-app-auth)
 - [API Reference](api/user.md)
