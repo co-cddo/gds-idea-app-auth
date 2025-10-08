@@ -210,9 +210,7 @@ def test_get_cognito_public_key_uses_cache(verifier, mock_cognito_jwks):
         mock_fetch.assert_not_called()
 
 
-def test_get_cognito_public_key_fetches_when_not_cached(
-    verifier, mock_cognito_jwks
-):
+def test_get_cognito_public_key_fetches_when_not_cached(verifier, mock_cognito_jwks):
     """_get_cognito_public_key fetches JWKS when not cached"""
     issuer = "https://cognito-idp.eu-west-2.amazonaws.com/test-pool"
 

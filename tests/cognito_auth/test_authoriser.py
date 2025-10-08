@@ -326,11 +326,15 @@ def test_authoriser_denies_unauthenticated_user(suppress_warnings):
 def test_from_config_loads_from_file(tmp_path):
     """from_config loads authorisation from local file"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["admin@example.com"],
-        "require_all": False
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["admin@example.com"],
+                "require_all": False,
+            }
+        )
+    )
 
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
         authoriser = Authoriser.from_config()
@@ -341,11 +345,15 @@ def test_from_config_loads_from_file(tmp_path):
 def test_from_config_validates_emails(tmp_path):
     """from_config validates email addresses"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["invalid-email"],
-        "require_all": False
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["invalid-email"],
+                "require_all": False,
+            }
+        )
+    )
 
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
         with pytest.raises(Exception, match="email address"):
@@ -364,11 +372,7 @@ def test_from_config_requires_at_least_one_rule(tmp_path):
 
 def test_from_config_raises_without_env_vars():
     """from_config raises error if no env vars set"""
-    with patch.dict(
-        os.environ,
-        {},
-        clear=True
-    ):
+    with patch.dict(os.environ, {}, clear=True):
         with pytest.raises(ValueError, match="Must set either"):
             Authoriser.from_config()
 
@@ -395,7 +399,7 @@ def test_from_config_aws_secrets(mock_user, suppress_warnings):
     mock_config = {
         "allowed_groups": ["developers"],
         "allowed_users": ["admin@example.com"],
-        "require_all": False
+        "require_all": False,
     }
 
     mock_client = MagicMock()
@@ -406,9 +410,7 @@ def test_from_config_aws_secrets(mock_user, suppress_warnings):
     # Patch boto3.client at the point where it's called
     with patch("boto3.client", return_value=mock_client) as mock_boto3_client:
         with patch.dict(
-            os.environ,
-            {"COGNITO_AUTH_SECRET_NAME": "my-app/auth-config"},
-            clear=True
+            os.environ, {"COGNITO_AUTH_SECRET_NAME": "my-app/auth-config"}, clear=True
         ):
             authoriser = Authoriser.from_config()
 
@@ -422,11 +424,15 @@ def test_from_config_aws_secrets(mock_user, suppress_warnings):
 def test_from_config_respects_require_all(tmp_path):
     """from_config respects require_all flag"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["admin@example.com"],
-        "require_all": True
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["admin@example.com"],
+                "require_all": True,
+            }
+        )
+    )
 
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
         authoriser = Authoriser.from_config()
@@ -439,11 +445,15 @@ def test_from_config_respects_require_all(tmp_path):
 def test_from_config_caches_result(tmp_path):
     """from_config caches result and doesn't reload within TTL"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["user@example.com"],
-        "require_all": False
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["user@example.com"],
+                "require_all": False,
+            }
+        )
+    )
 
     with patch.dict(
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
@@ -461,11 +471,15 @@ def test_from_config_caches_result(tmp_path):
 def test_clear_config_cache_forces_reload(tmp_path):
     """clear_config_cache forces immediate reload"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["user@example.com"],
-        "require_all": False
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["user@example.com"],
+                "require_all": False,
+            }
+        )
+    )
 
     with patch.dict(
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
@@ -486,11 +500,15 @@ def test_clear_config_cache_forces_reload(tmp_path):
 def test_from_config_cache_with_file_change(tmp_path):
     """Config reload picks up changes after cache clear"""
     config_file = tmp_path / "auth-config.json"
-    config_file.write_text(json.dumps({
-        "allowed_groups": ["developers"],
-        "allowed_users": ["user@example.com"],
-        "require_all": False
-    }))
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["developers"],
+                "allowed_users": ["user@example.com"],
+                "require_all": False,
+            }
+        )
+    )
 
     with patch.dict(
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
@@ -500,11 +518,15 @@ def test_from_config_cache_with_file_change(tmp_path):
         assert len(authoriser1.rules) == 2
 
         # Update config file
-        config_file.write_text(json.dumps({
-            "allowed_groups": ["admins", "developers", "users"],
-            "allowed_users": ["user@example.com"],
-            "require_all": False
-        }))
+        config_file.write_text(
+            json.dumps(
+                {
+                    "allowed_groups": ["admins", "developers", "users"],
+                    "allowed_users": ["user@example.com"],
+                    "require_all": False,
+                }
+            )
+        )
 
         # Without clearing cache, should still get old config
         authoriser2 = Authoriser.from_config()

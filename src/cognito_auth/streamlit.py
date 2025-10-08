@@ -53,8 +53,7 @@ class StreamlitAuth(BaseAuth):
                     "this application."
                 )
                 st.info(
-                    "Please contact your administrator if you believe this "
-                    "is an error."
+                    "Please contact your administrator if you believe this is an error."
                 )
                 st.stop()
 
@@ -63,7 +62,6 @@ class StreamlitAuth(BaseAuth):
         except Exception:
             st.error("🔒 Authentication failed.")
             st.info(
-                "Unable to verify your identity. Please try again or "
-                "contact support."
+                "Unable to verify your identity. Please try again or contact support."
             )
             st.stop()
