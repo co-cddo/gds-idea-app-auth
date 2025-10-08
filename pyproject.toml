@@ -1,11 +1,12 @@
 [project]
 name = "cognito-auth"
 version = "0.1.0"
-description = "Add your description here"
+description = "Unified authentication and authorisation for AWS Cognito-protected web applications across multiple frameworks"
 readme = "README.md"
 authors = [
     { name = "David Gillespie", email = "david.gillespie@digital.cabinet-office.gov.uk" }
 ]
+license = { text = "MIT" }
 requires-python = ">=3.13"
 dependencies = [
     "python-jose>=3.5.0",
