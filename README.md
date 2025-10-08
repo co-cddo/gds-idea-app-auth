@@ -11,15 +11,15 @@ pip install cognito-auth[streamlit]  # or dash, fastapi, gradio, all
 ## Quick Start
 
 ```python
-from cognito_auth import AuthGuard
+from cognito_auth.streamlit import StreamlitAuth 
 
-guard = AuthGuard.from_config()
-user = guard.streamlit()  # or dash(), fastapi(), etc.
+guard = Auth.from_config()
+user = auth.get_auth_user()
 ```
 
 ## Documentation
 
-Full documentation available at co-cddo.github.io/gds-idea-app-auth.
+Full documentation available at [github pages](co-cddo.github.io/gds-idea-app-auth).
 
 ## Contributing
 
