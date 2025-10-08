@@ -51,7 +51,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Run ruff check
         run: uv run ruff check .
@@ -81,7 +81,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Run tests with coverage
         run: uv run pytest --cov --cov-report=term-missing
@@ -103,7 +103,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Build documentation
         run: uv run mkdocs build --strict
