@@ -16,11 +16,11 @@ jobs:
       - name: Check version has been bumped
         run: |
           # Get version from PR branch
-          PR_VERSION=$(grep -oP '(?<=version = ")[^"]*' pyproject.toml)
+          PR_VERSION=$(grep -oP '^version = "\K[^"]*' pyproject.toml)
 
           # Get version from base branch
           git fetch origin ${{ github.base_ref }}
-          BASE_VERSION=$(git show origin/${{ github.base_ref }}:pyproject.toml | grep -oP '(?<=version = ")[^"]*')
+          BASE_VERSION=$(git show origin/${{ github.base_ref }}:pyproject.toml | grep -oP '^version = "\K[^"]*')
 
           echo "Base version: $BASE_VERSION"
           echo "PR version: $PR_VERSION"
