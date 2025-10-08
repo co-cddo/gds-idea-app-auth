@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 import warnings
@@ -10,6 +11,8 @@ from jose import jwt
 
 from .exceptions import MissingTokenError
 from .token_verifier import TokenVerifier
+
+logger = logging.getLogger(__name__)
 
 
 class User:
@@ -39,25 +42,38 @@ class User:
             ExpiredTokenError: If tokens have expired
         """
         if not oidc_data_header:
+            logger.error("Missing x-amzn-oidc-data header")
             raise MissingTokenError("x-amzn-oidc-data header is required")
         if not access_token_header:
+            logger.error("Missing x-amzn-oidc-accesstoken header")
             raise MissingTokenError("x-amzn-oidc-accesstoken header is required")
+
+        logger.debug("Initializing User with verify_tokens=%s", verify_tokens)
 
         self._region = region
         self._verifier = TokenVerifier(region) if verify_tokens else None
 
         # Verify and decode tokens
         if verify_tokens:
+            logger.debug("Verifying JWT tokens")
             self._oidc_claims = self._verifier.verify_alb_token(oidc_data_header)
             self._access_claims = self._verifier.verify_cognito_token(
                 access_token_header
             )
         else:
             # Decode without verification (not recommended for production)
+            logger.warning("Decoding tokens without verification - NOT recommended for production")
             self._oidc_claims = jwt.get_unverified_claims(oidc_data_header)
             self._access_claims = jwt.get_unverified_claims(access_token_header)
 
         self._is_authenticated = True
+
+        logger.info(
+            "User authenticated: email=%s, groups=%s, sub=%s",
+            self._oidc_claims.get("email", "N/A"),
+            self._access_claims.get("cognito:groups", []),
+            self._oidc_claims.get("sub", "N/A")
+        )
 
     @property
     def is_authenticated(self) -> bool:
@@ -166,6 +182,9 @@ class User:
             >>> user = User.create_mock(email="dev@company.com", groups=["admin"])
             >>> user = User.create_mock()  # Uses defaults from JSON or hardcoded
         """
+        logger.warning(
+            "Creating mock user - should only be used for development/testing"
+        )
         warnings.warn(
             "User.create_mock() is being used. This should only be used for "
             "development and testing, never in production.",
@@ -175,6 +194,7 @@ class User:
 
         # Load config from JSON if present
         config = cls._load_dev_config()
+        logger.debug("Mock user config loaded: %s", config.keys() if config else "empty")
 
         # Merge provided values with config and defaults
         email = email or config.get("email", "dev@example.com")
@@ -222,6 +242,13 @@ class User:
         instance._access_claims = access_claims
         instance._is_authenticated = True
 
+        logger.info(
+            "Mock user created: email=%s, groups=%s, sub=%s",
+            email,
+            groups,
+            sub
+        )
+
         return instance
 
     @staticmethod
@@ -236,14 +263,19 @@ class User:
             path = Path.cwd() / "dev-mock-user.json"
 
         if path.exists():
+            logger.debug("Loading dev config from: %s", path)
             try:
                 with path.open() as f:
-                    return json.load(f)
+                    config = json.load(f)
+                    logger.info("Dev config loaded successfully from: %s", path)
+                    return config
             except (json.JSONDecodeError, OSError) as e:
+                logger.error("Failed to load dev config from %s: %s", path, e)
                 warnings.warn(
                     f"Failed to load dev config from {path}: {e}",
                     UserWarning,
                     stacklevel=3,
                 )
                 return {}
+        logger.debug("No dev config file found at: %s", path)
         return {}
