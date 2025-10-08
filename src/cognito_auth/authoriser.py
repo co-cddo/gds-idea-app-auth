@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Protocol
@@ -13,6 +14,8 @@ from pydantic import (
 )
 
 from .user import User
+
+logger = logging.getLogger(__name__)
 
 # TTL cache for config loading - 5 minutes
 _config_cache = TTLCache(maxsize=1, ttl=300)
@@ -69,7 +72,14 @@ class GroupRule:
 
     def is_allowed(self, user: User) -> bool:
         user_groups = set(user.access_claims.get("cognito:groups", []))
-        return bool(user_groups & self.allowed_groups)
+        allowed = bool(user_groups & self.allowed_groups)
+        logger.debug(
+            "GroupRule check: user_groups=%s, allowed_groups=%s, result=%s",
+            user_groups,
+            self.allowed_groups,
+            allowed,
+        )
+        return allowed
 
 
 class EmailRule:
@@ -79,7 +89,9 @@ class EmailRule:
         self.allowed_emails = allowed_emails
 
     def is_allowed(self, user: User) -> bool:
-        return user.email in self.allowed_emails
+        allowed = user.email in self.allowed_emails
+        logger.debug("EmailRule check: user_email=%s, allowed=%s", user.email, allowed)
+        return allowed
 
 
 class Authoriser:
@@ -96,18 +108,38 @@ class Authoriser:
 
     def is_authorised(self, user: User) -> bool:
         """Check if user is authorised"""
+        logger.debug(
+            "Checking authorisation for user: email=%s, groups=%s",
+            user.email,
+            user.groups,
+        )
+
         if not user.is_authenticated:
+            logger.warning("User not authenticated, denying access")
             return False
 
         if not self.rules:
+            logger.debug("No rules configured, allowing all authenticated users")
             return True  # No rules = allow all authenticated users
 
         results = [rule.is_allowed(user) for rule in self.rules]
+        logger.debug(
+            "Rule evaluation results: %s (require_all=%s)", results, self.require_all
+        )
 
         if self.require_all:
-            return all(results)
+            authorised = all(results)
         else:
-            return any(results)
+            authorised = any(results)
+
+        if authorised:
+            logger.info("User authorised: email=%s, groups=%s", user.email, user.groups)
+        else:
+            logger.warning(
+                "User denied access: email=%s, groups=%s", user.email, user.groups
+            )
+
+        return authorised
 
     @classmethod
     def from_lists(
@@ -175,20 +207,41 @@ class Authoriser:
         config_path = os.getenv("COGNITO_AUTH_CONFIG_PATH")
         secret_name = os.getenv("COGNITO_AUTH_SECRET_NAME")
 
+        logger.debug(
+            "Loading authoriser config: config_path=%s, secret_name=%s",
+            config_path or "not set",
+            secret_name or "not set",
+        )
+
         if config_path:
             # Development: load from local file
+            logger.info("Loading config from local file: %s", config_path)
             raw_config = cls._load_from_file(config_path)
         elif secret_name:
             # Production: load from AWS Secrets Manager
+            logger.info("Loading config from AWS Secrets Manager: %s", secret_name)
             raw_config = cls._load_from_aws_secrets(secret_name)
         else:
+            logger.error(
+                "No config source specified "
+                "(COGNITO_AUTH_CONFIG_PATH or COGNITO_AUTH_SECRET_NAME)"
+            )
             raise ValueError(
                 "Must set either COGNITO_AUTH_CONFIG_PATH (for local file) "
                 "or COGNITO_AUTH_SECRET_NAME (for AWS Secrets Manager)"
             )
 
         # Parse and validate with pydantic
+        logger.debug("Validating config with pydantic")
         config = AuthConfig.model_validate(raw_config)
+
+        logger.info(
+            "Authoriser config loaded: allowed_groups=%s, "
+            "allowed_users=%s, require_all=%s",
+            config.allowed_groups,
+            len(config.allowed_users) if config.allowed_users else 0,
+            config.require_all,
+        )
 
         return cls.from_lists(
             allowed_groups=config.allowed_groups,
@@ -201,12 +254,16 @@ class Authoriser:
         """Load configuration from a local JSON file."""
         path = Path(file_path)
         if not path.exists():
+            logger.error("Config file not found: %s", file_path)
             raise FileNotFoundError(f"Config file not found: {file_path}")
 
         try:
             with path.open() as f:
-                return json.load(f)
+                config = json.load(f)
+                logger.debug("Successfully loaded config from file: %s", file_path)
+                return config
         except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in config file %s: %s", file_path, e)
             raise ValueError(f"Invalid JSON in config file {file_path}: {e}") from e
 
     @staticmethod
@@ -215,16 +272,25 @@ class Authoriser:
         try:
             import boto3
         except ImportError as e:
+            logger.error("boto3 not installed, cannot load from AWS Secrets Manager")
             raise ImportError(
                 "boto3 is required for AWS Secrets Manager. "
                 "Install with: pip install boto3"
             ) from e
 
         try:
+            logger.debug("Fetching secret from AWS Secrets Manager: %s", secret_name)
             client = boto3.client("secretsmanager")
             response = client.get_secret_value(SecretId=secret_name)
-            return json.loads(response["SecretString"])
+            config = json.loads(response["SecretString"])
+            logger.debug("Successfully loaded config from AWS Secrets Manager")
+            return config
         except Exception as e:
+            logger.error(
+                "Failed to load config from AWS Secrets Manager (secret: %s): %s",
+                secret_name,
+                e,
+            )
             raise RuntimeError(
                 f"Failed to load config from AWS Secrets Manager "
                 f"(secret: {secret_name}): {e}"
@@ -247,4 +313,5 @@ class Authoriser:
             # Next call will fetch fresh config
             guard = AuthGuard.from_config()
         """
+        logger.info("Clearing authoriser config cache")
         _config_cache.clear()
