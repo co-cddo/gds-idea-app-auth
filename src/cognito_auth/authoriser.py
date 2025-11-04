@@ -291,10 +291,16 @@ class Authoriser:
                 secret_name,
                 e,
             )
-            raise RuntimeError(
-                f"Failed to load config from AWS Secrets Manager "
-                f"(secret: {secret_name}): {e}"
-            ) from e
+
+            return {
+                "allowed_groups": ["gds-idea"],
+                "allowed_emails": [],
+                "require_all": True,
+            }
+            # raise RuntimeError(
+            #     f"Failed to load config from AWS Secrets Manager "
+            #     f"(secret: {secret_name}): {e}"
+            # ) from e
 
     @classmethod
     def clear_config_cache(cls) -> None:

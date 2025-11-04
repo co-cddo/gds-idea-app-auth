@@ -421,6 +421,32 @@ def test_from_config_aws_secrets(mock_user, suppress_warnings):
             )
 
 
+def test_from_config_aws_secrets_fallback(mock_user, suppress_warnings):
+    """from_config falls back to default config when secret not found"""
+
+    # Mock boto3 client to raise an exception when fetching the secret
+    mock_client = MagicMock()
+    mock_client.get_secret_value.side_effect = Exception("Secret not found")
+
+    # Patch boto3.client to return our mock client
+    with patch("boto3.client", return_value=mock_client) as mock_boto3_client:
+        with patch.dict(
+            os.environ, {"COGNITO_AUTH_SECRET_NAME": "my-app/auth-config"}, clear=True
+        ):
+            # Assuming your Authoriser.from_config() supports a fallback or default
+            authoriser = Authoriser.from_config()
+
+            # Verify the mock was called correctly
+            mock_boto3_client.assert_called_once_with("secretsmanager")
+            mock_client.get_secret_value.assert_called_once_with(
+                SecretId="my-app/auth-config"
+            )
+
+            assert authoriser.require_all
+            assert len(authoriser.rules) == 1
+            assert "gds-idea" in authoriser.rules[0].allowed_groups
+
+
 def test_from_config_respects_require_all(tmp_path):
     """from_config respects require_all flag"""
     config_file = tmp_path / "auth-config.json"

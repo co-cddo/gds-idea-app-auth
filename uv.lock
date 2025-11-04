@@ -290,7 +290,7 @@ wheels = [
 
 [[package]]
 name = "cognito-auth"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
