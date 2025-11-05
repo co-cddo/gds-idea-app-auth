@@ -71,13 +71,27 @@ class DashAuth(BaseAuth):
                 user = auth.get_auth_user()
                 return f"Hello {user.email}"
         """
-        # Get the underlying Flask app (Dash.server or Flask app itself)
         flask_app = app.server if isinstance(app, Dash) else app
 
         @flask_app.before_request
         def _check_auth():
-            """Validate authentication before every request."""
+            # Skip auth for Dash internal endpoints
+            dash_paths = (
+                "/_dash-layout",
+                "/_dash-dependencies",
+                "/_dash-update-component",
+                "/assets/",
+                "/favicon.ico",
+            )
+
+            # Skip auth for health check
+            health_paths = ("/health",)
+
+            if any(request.path.startswith(p) for p in dash_paths + health_paths):
+                return  # Skip auth for these paths
+
             try:
+                # Extract and validate user
                 headers = dict(request.headers)
                 user = self._get_user_from_headers(headers)
 
@@ -88,6 +102,7 @@ class DashAuth(BaseAuth):
                 g.user = user
 
             except Exception:
+                # For all other exceptions, redirect to login
                 return redirect(self.redirect_url)
 
     def get_auth_user(self) -> User:
