@@ -111,6 +111,26 @@ def test_email_rule_with_empty_allowed_emails(mock_user):
     assert rule.is_allowed(mock_user) is False
 
 
+def test_email_rule_case_insensitive(mock_user):
+    """Email comparison is case-insensitive"""
+    # Test with uppercase email in allowed list
+    rule = EmailRule({"Test@Example.com"})
+    assert rule.is_allowed(mock_user) is True
+
+    # Test with mixed case
+    rule = EmailRule({"TEST@EXAMPLE.COM"})
+    assert rule.is_allowed(mock_user) is True
+
+
+def test_email_rule_case_insensitive_user_uppercase(suppress_warnings):
+    """Email comparison works when user email has uppercase"""
+    user = User.create_mock(email="Test@Example.COM", groups=["developers"])
+
+    # Test with lowercase in allowed list
+    rule = EmailRule({"test@example.com"})
+    assert rule.is_allowed(user) is True
+
+
 # Tests for Authoriser with single rules
 
 
