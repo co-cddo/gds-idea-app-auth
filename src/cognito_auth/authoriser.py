@@ -86,10 +86,11 @@ class EmailRule:
     """Allow specific users by email address"""
 
     def __init__(self, allowed_emails: set[str]):
-        self.allowed_emails = allowed_emails
+        # Normalise emails to lowercase for case-insensitive comparison
+        self.allowed_emails = {email.lower() for email in allowed_emails}
 
     def is_allowed(self, user: User) -> bool:
-        allowed = user.email in self.allowed_emails
+        allowed = user.email.lower() in self.allowed_emails
         logger.debug("EmailRule check: user_email=%s, allowed=%s", user.email, allowed)
         return allowed
 

@@ -1,6 +1,6 @@
 [project]
 name = "cognito-auth"
-version = "0.1.3"
+version = "0.1.4"
 description = "Unified authentication and authorisation for AWS Cognito-protected web applications across multiple frameworks"
 readme = "README.md"
 authors = [
