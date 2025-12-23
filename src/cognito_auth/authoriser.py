@@ -295,7 +295,7 @@ class Authoriser:
 
             return {
                 "allowed_groups": ["gds-idea"],
-                "allowed_emails": [],
+                "allowed_users": [],
                 "require_all": True,
             }
             # raise RuntimeError(
