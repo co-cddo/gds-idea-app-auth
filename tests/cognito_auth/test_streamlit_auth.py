@@ -1,5 +1,4 @@
 import os
-import time
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -155,7 +154,9 @@ def test_get_auth_user_updates_cache_when_headers_available(
     mock_streamlit.session_state["_cognito_auth_user"] = old_user
 
     with (
-        patch.object(streamlit_auth, "_get_user_from_headers", return_value=new_user) as mock_get_user,
+        patch.object(
+            streamlit_auth, "_get_user_from_headers", return_value=new_user
+        ) as mock_get_user,
         patch.object(streamlit_auth, "_is_authorised", return_value=True),
     ):
         user = streamlit_auth.get_auth_user()
@@ -245,9 +246,7 @@ def test_get_auth_user_handles_expired_token_error(mock_streamlit, streamlit_aut
         assert "expired" in mock_streamlit.error.call_args[0][0].lower()
 
 
-def test_get_auth_user_prefers_fresh_headers_over_cache(
-    mock_streamlit, streamlit_auth
-):
+def test_get_auth_user_prefers_fresh_headers_over_cache(mock_streamlit, streamlit_auth):
     """get_auth_user always tries headers first, even when cache exists"""
     old_user = User.create_mock(email="old@example.com", groups=["developers"])
     new_user = User.create_mock(email="new@example.com", groups=["developers"])
