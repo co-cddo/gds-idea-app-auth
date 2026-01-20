@@ -145,10 +145,10 @@ def test_get_auth_user_updates_cache_when_headers_available(
     # Create mock user with future expiration
     future_exp = datetime.now() + timedelta(hours=1)
     old_user = User.create_mock(email="old@example.com", groups=["developers"])
-    old_user._oidc_claims["exp"] = int(future_exp.timestamp())
+    old_user._access_claims["exp"] = int(future_exp.timestamp())
 
     new_user = User.create_mock(email="new@example.com", groups=["developers"])
-    new_user._oidc_claims["exp"] = int(future_exp.timestamp())
+    new_user._access_claims["exp"] = int(future_exp.timestamp())
 
     # Pre-populate cache with old user
     mock_streamlit.session_state["_cognito_auth_user"] = old_user
@@ -174,7 +174,8 @@ def test_get_auth_user_checks_cached_token_expiration(mock_streamlit, streamlit_
     # Create mock user with PAST expiration
     past_exp = datetime.now() - timedelta(hours=1)
     mock_user = User.create_mock(groups=["developers"])
-    mock_user._oidc_claims["exp"] = int(past_exp.timestamp())
+    # Set expiry in access_claims (not oidc_claims) since user.exp reads from there
+    mock_user._access_claims["exp"] = int(past_exp.timestamp())
 
     # Pre-populate cache with expired user
     mock_streamlit.session_state["_cognito_auth_user"] = mock_user
@@ -196,7 +197,7 @@ def test_get_auth_user_falls_back_to_cache_on_missing_headers(
     # Create mock user with future expiration
     future_exp = datetime.now() + timedelta(hours=1)
     mock_user = User.create_mock(groups=["developers"])
-    mock_user._oidc_claims["exp"] = int(future_exp.timestamp())
+    mock_user._access_claims["exp"] = int(future_exp.timestamp())
 
     # Pre-populate cache
     mock_streamlit.session_state["_cognito_auth_user"] = mock_user
@@ -232,7 +233,8 @@ def test_get_auth_user_fails_when_no_cache_and_no_headers(
 
 
 def test_get_auth_user_handles_expired_token_error(mock_streamlit, streamlit_auth):
-    """get_auth_user handles ExpiredTokenError from token verification"""
+    """get_auth_user handles ExpiredTokenError and falls back to cache"""
+    # No cached user - should fail with initialization error
     with patch.object(
         streamlit_auth,
         "_get_user_from_headers",
@@ -241,9 +243,9 @@ def test_get_auth_user_handles_expired_token_error(mock_streamlit, streamlit_aut
         with pytest.raises(SystemExit, match="st.stop"):
             streamlit_auth.get_auth_user()
 
-        # Verify error shown
+        # Verify error shown (falls back to cache, but no cache exists)
         mock_streamlit.error.assert_called_once()
-        assert "expired" in mock_streamlit.error.call_args[0][0].lower()
+        assert "initialization" in mock_streamlit.error.call_args[0][0].lower()
 
 
 def test_get_auth_user_prefers_fresh_headers_over_cache(mock_streamlit, streamlit_auth):

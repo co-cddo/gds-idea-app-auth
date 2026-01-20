@@ -121,8 +121,10 @@ class User:
 
     @property
     def exp(self) -> datetime | None:
-        """Token expiration time"""
-        exp_timestamp = self._oidc_claims.get("exp")
+        """Token expiration time (from Cognito access token)"""
+        # Use access token expiry (typically 60 min) rather than ALB token expiry
+        # which may be shorter due to "Authentication flow session duration" setting
+        exp_timestamp = self._access_claims.get("exp")
         if exp_timestamp:
             return datetime.fromtimestamp(exp_timestamp)
         return None

@@ -65,8 +65,10 @@ class StreamlitAuth(BaseAuth):
             return self._get_cached_user_or_fail(e)
 
         except ExpiredTokenError as e:
-            # Token expired - clear cache and force refresh
-            self._handle_expired_token(e)
+            # Token in headers expired (likely short-lived ALB token)
+            # Check cache - may have longer-lived access token
+            logger.debug("Token in headers expired, attempting cache fallback")
+            return self._get_cached_user_or_fail(e)
 
         except Exception as e:
             self._handle_auth_error(e)
@@ -94,7 +96,9 @@ class StreamlitAuth(BaseAuth):
         )
         return user
 
-    def _get_cached_user_or_fail(self, error: MissingTokenError) -> User:
+    def _get_cached_user_or_fail(
+        self, error: MissingTokenError | ExpiredTokenError
+    ) -> User:
         """Get cached user if available, otherwise fail with error."""
         cached_user = st.session_state.get("_cognito_auth_user")
 
