@@ -60,14 +60,22 @@ class StreamlitAuth(BaseAuth):
             return self._authorize_and_cache_user(user)
 
         except MissingTokenError as e:
-            # Headers missing - likely WebSocket reconnection, try cache
-            logger.debug("Headers missing, attempting cache fallback")
-            return self._get_cached_user_or_fail(e)
+            # Headers missing - this shouldn't happen with proper ALB configuration
+            # Indicates misconfiguration or ALB bypass
+            logger.error(
+                f"Authentication headers missing - possible misconfiguration. "
+                f"Headers present: {list(dict(st.context.headers).keys())}"
+            )
+            self._handle_auth_error(e)
 
         except ExpiredTokenError as e:
-            # Token in headers expired (likely short-lived ALB token)
-            # Check cache - may have longer-lived access token
-            logger.debug("Token in headers expired, attempting cache fallback")
+            # Token in headers expired (stale headers from initial page load)
+            # This is normal - ALB token expires after 3 minutes
+            # Check cache - may have longer-lived access token (60 min)
+            logger.debug(
+                "Checked headers but ALB token expired (stale), "
+                "attempting cache fallback"
+            )
             return self._get_cached_user_or_fail(e)
 
         except Exception as e:
