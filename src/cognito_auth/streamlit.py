@@ -43,6 +43,10 @@ class StreamlitAuth(BaseAuth):
             user = auth.get_auth_user()
             st.write(f"Hello {user.email}")
         """
+        # Check for cached user, survives websocket reconnect
+        if "_cognito_auth_user" in st.session_state:
+            return st.session_state._cognito_auth_user
+
         try:
             headers = st.context.headers
             user = self._get_user_from_headers(dict(headers))
@@ -57,6 +61,8 @@ class StreamlitAuth(BaseAuth):
                 )
                 st.stop()
 
+            # Cache user in session state
+            st.session_state._cognito_auth_user = user
             return user
 
         except Exception:
