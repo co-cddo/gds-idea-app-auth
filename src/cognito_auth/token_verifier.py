@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 
@@ -7,6 +8,8 @@ from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
 from .exceptions import ExpiredTokenError, InvalidTokenError
+
+logger = logging.getLogger(__name__)
 
 # Cache size constants
 # ALB keys: AWS typically maintains 2-3 active keys for rotation at any time
@@ -163,8 +166,18 @@ class TokenVerifier:
 
             # Check expiration manually since we disabled some checks
             exp = claims.get("exp")
-            if exp and exp < time.time():
-                raise ExpiredTokenError("ALB token has expired")
+            if exp:
+                now = time.time()
+                time_until_exp = exp - now
+                logger.debug(
+                    f"ALB token expiration check: exp={exp}, now={now}, "
+                    f"time_until_expiry={time_until_exp:.0f}s"
+                )
+                if exp < now:
+                    raise ExpiredTokenError(
+                        f"ALB token has expired (was valid until {exp}, "
+                        f"now is {now}, expired {-time_until_exp:.0f}s ago)"
+                    )
 
             return claims
 

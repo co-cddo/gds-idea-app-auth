@@ -61,9 +61,11 @@ class StreamlitAuth(BaseAuth):
 
         except MissingTokenError as e:
             # Headers missing - likely WebSocket reconnection, try cache
+            logger.debug("Headers missing, attempting cache fallback")
             return self._get_cached_user_or_fail(e)
 
         except ExpiredTokenError as e:
+            # Token expired - clear cache and force refresh
             self._handle_expired_token(e)
 
         except Exception as e:
