@@ -1,13 +1,11 @@
 import os
 from unittest.mock import patch
 
-import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from cognito_auth import Authoriser, User
+from cognito_auth import User
 from cognito_auth.fastapi import FastAPIAuth
-
 
 # Tests for protect_app()
 

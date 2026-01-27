@@ -5,9 +5,8 @@ import pytest
 from dash import Dash
 from flask import Flask, g
 
-from cognito_auth import Authoriser, User
+from cognito_auth import User
 from cognito_auth.dash import DashAuth
-
 
 # Tests for protect_app()
 

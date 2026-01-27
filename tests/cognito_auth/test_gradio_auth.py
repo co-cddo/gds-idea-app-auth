@@ -5,9 +5,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from cognito_auth import Authoriser, User
+from cognito_auth import User
 from cognito_auth.gradio import GradioAuth
-
 
 # Tests for protect_app()
 
