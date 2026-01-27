@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 
@@ -7,6 +8,8 @@ from jose import jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
 from .exceptions import ExpiredTokenError, InvalidTokenError
+
+logger = logging.getLogger(__name__)
 
 # Cache size constants
 # ALB keys: AWS typically maintains 2-3 active keys for rotation at any time
@@ -138,10 +141,12 @@ class TokenVerifier:
             InvalidTokenError: If token is invalid
             ExpiredTokenError: If token has expired
         """
+        logger.debug("Starting ALB token verification")
         try:
             # Get key ID from token header
             headers = jwt.get_unverified_headers(token)
             key_id = headers.get("kid")
+            logger.debug(f"ALB token key_id: {key_id}")
 
             if not key_id:
                 raise InvalidTokenError("ALB token missing 'kid' in header")
@@ -163,8 +168,26 @@ class TokenVerifier:
 
             # Check expiration manually since we disabled some checks
             exp = claims.get("exp")
-            if exp and exp < time.time():
-                raise ExpiredTokenError("ALB token has expired")
+            logger.debug(f"ALB token claims extracted, exp={exp}")
+            if exp:
+                now = time.time()
+                time_until_exp = exp - now
+                logger.debug(
+                    f"ALB token expiration check: exp={exp}, now={now}, "
+                    f"time_until_expiry={time_until_exp:.0f}s"
+                )
+                if exp < now:
+                    logger.warning(
+                        f"ALB token EXPIRED: expired {-time_until_exp:.0f}s ago"
+                    )
+                    raise ExpiredTokenError(
+                        f"ALB token has expired (was valid until {exp}, "
+                        f"now is {now}, expired {-time_until_exp:.0f}s ago)"
+                    )
+                else:
+                    logger.debug(f"ALB token valid for {time_until_exp:.0f}s more")
+            else:
+                logger.warning("ALB token has no 'exp' claim!")
 
             return claims
 

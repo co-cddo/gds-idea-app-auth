@@ -5,244 +5,177 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from cognito_auth import Authoriser, User
+from cognito_auth import User
 from cognito_auth.fastapi import FastAPIAuth
 
 
-@pytest.fixture(autouse=True)
-def clear_cache_before_test():
-    """Automatically clear config cache before each test"""
-    Authoriser.clear_config_cache()
-    return
+@pytest.fixture
+def fastapi_auth(auth_config_file):
+    """Create FastAPIAuth instance with config"""
+    with patch.dict(
+        os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(auth_config_file)}, clear=True
+    ):
+        yield FastAPIAuth()
+
+
+@pytest.fixture
+def fastapi_app():
+    """Create FastAPI app instance"""
+    return FastAPI()
 
 
 # Tests for protect_app()
 
 
-def test_protect_app_adds_middleware(tmp_path):
+def test_protect_app_adds_middleware(fastapi_auth, fastapi_app):
     """protect_app adds middleware to FastAPI app"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
+    initial_middleware_count = len(fastapi_app.user_middleware)
+    fastapi_auth.protect_app(fastapi_app)
 
-    with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
-        ),
-    ):
-        app = FastAPI()
-        auth = FastAPIAuth()
-
-        initial_middleware_count = len(app.user_middleware)
-        auth.protect_app(app)
-
-        # Verify middleware was added
-        assert len(app.user_middleware) > initial_middleware_count
+    # Verify middleware was added
+    assert len(fastapi_app.user_middleware) > initial_middleware_count
 
 
-def test_protect_app_middleware_redirects_unauthorised_user(tmp_path):
+def test_protect_app_middleware_redirects_unauthorised_user(
+    fastapi_auth, fastapi_app, mock_user_other
+):
     """protect_app middleware redirects unauthorised users"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
 
-    mock_user = User.create_mock(groups=["other-group"])
+    @fastapi_app.get("/")
+    def index():
+        return {"message": "Success"}
 
     with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+        patch.object(
+            fastapi_auth, "_get_user_from_headers", return_value=mock_user_other
         ),
+        patch.object(fastapi_auth, "_is_authorised", return_value=False),
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
+        fastapi_auth.protect_app(fastapi_app)
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index():
-            return {"message": "Success"}
+        response = client.get(
+            "/",
+            headers={"X-Amzn-Oidc-Data": "token"},
+            follow_redirects=False,
+        )
 
-        with (
-            patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorised", return_value=False),
-        ):
-            auth.protect_app(app)
-            client = TestClient(app)
-
-            response = client.get(
-                "/",
-                headers={"X-Amzn-Oidc-Data": "token"},
-                follow_redirects=False,
-            )
-
-            # Should redirect
-            assert response.status_code == 307  # FastAPI redirect status
-            assert auth.redirect_url in response.headers["location"]
+        # Should redirect
+        assert response.status_code == 307  # FastAPI redirect status
+        assert fastapi_auth.redirect_url in response.headers["location"]
 
 
 # Tests for get_auth_user()
 
 
-def test_get_auth_user_retrieves_from_request_state_when_protect_app_used(tmp_path):
+def test_get_auth_user_retrieves_from_request_state_when_protect_app_used(
+    fastapi_auth, fastapi_app, mock_user_developer
+):
     """get_auth_user retrieves user from request.state when protect_app used"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
 
-    mock_user = User.create_mock(groups=["developers"])
+    @fastapi_app.get("/")
+    def index(user: User = Depends(fastapi_auth.get_auth_user)):  # noqa: B008
+        return {"email": user.email}
 
     with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+        patch.object(
+            fastapi_auth, "_get_user_from_headers", return_value=mock_user_developer
         ),
+        patch.object(fastapi_auth, "_is_authorised", return_value=True),
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
+        fastapi_auth.protect_app(fastapi_app)
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
-            return {"email": user.email}
+        response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
 
-        with (
-            patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorised", return_value=True),
-        ):
-            auth.protect_app(app)
-            client = TestClient(app)
-
-            response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
-
-            assert response.status_code == 200
-            assert response.json()["email"] == mock_user.email
+        assert response.status_code == 200
+        assert response.json()["email"] == mock_user_developer.email
 
 
-def test_get_auth_user_validates_on_demand_without_protect_app(tmp_path):
+def test_get_auth_user_validates_on_demand_without_protect_app(
+    fastapi_auth, fastapi_app, mock_user_developer
+):
     """get_auth_user validates on-demand when protect_app not used"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
+    # Note: NOT calling protect_app()
 
-    mock_user = User.create_mock(groups=["developers"])
+    @fastapi_app.get("/")
+    def index(user: User = Depends(fastapi_auth.get_auth_user)):  # noqa: B008
+        return {"email": user.email}
 
     with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+        patch.object(
+            fastapi_auth, "_get_user_from_headers", return_value=mock_user_developer
         ),
+        patch.object(fastapi_auth, "_is_authorised", return_value=True),
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
-        # Note: NOT calling protect_app()
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
-            return {"email": user.email}
+        response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
 
-        with (
-            patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorised", return_value=True),
-        ):
-            client = TestClient(app)
-
-            response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
-
-            assert response.status_code == 200
-            assert response.json()["email"] == mock_user.email
+        assert response.status_code == 200
+        assert response.json()["email"] == mock_user_developer.email
 
 
-def test_get_auth_user_raises_http_exception_when_unauthorised(tmp_path):
+def test_get_auth_user_raises_http_exception_when_unauthorised(
+    fastapi_auth, fastapi_app, mock_user_other
+):
     """get_auth_user raises HTTPException 403 when user not authorised"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
 
-    mock_user = User.create_mock(groups=["other-group"])
+    @fastapi_app.get("/")
+    def index(user: User = Depends(fastapi_auth.get_auth_user)):  # noqa: B008
+        return {"email": user.email}
 
     with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+        patch.object(
+            fastapi_auth, "_get_user_from_headers", return_value=mock_user_other
         ),
+        patch.object(fastapi_auth, "_is_authorised", return_value=False),
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
-            return {"email": user.email}
+        response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
 
-        with (
-            patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorised", return_value=False),
-        ):
-            client = TestClient(app)
-
-            response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
-
-            assert response.status_code == 403
-            assert "Access denied" in response.json()["detail"]
+        assert response.status_code == 403
+        assert "Access denied" in response.json()["detail"]
 
 
-def test_get_auth_user_raises_http_exception_on_auth_failure(tmp_path):
+def test_get_auth_user_raises_http_exception_on_auth_failure(fastapi_auth, fastapi_app):
     """get_auth_user raises HTTPException 401 when authentication fails"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
 
-    with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
-        ),
+    @fastapi_app.get("/")
+    def index(user: User = Depends(fastapi_auth.get_auth_user)):  # noqa: B008
+        return {"email": user.email}
+
+    with patch.object(
+        fastapi_auth, "_get_user_from_headers", side_effect=Exception("Auth failed")
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index(user: User = Depends(auth.get_auth_user)):  # noqa: B008
-            return {"email": user.email}
+        response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
 
-        with patch.object(
-            auth, "_get_user_from_headers", side_effect=Exception("Auth failed")
-        ):
-            client = TestClient(app)
-
-            response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
-
-            assert response.status_code == 401
-            assert "Authentication failed" in response.json()["detail"]
+        assert response.status_code == 401
+        assert "Authentication failed" in response.json()["detail"]
 
 
-def test_protect_app_allows_authorised_user(tmp_path):
+def test_protect_app_allows_authorised_user(
+    fastapi_auth, fastapi_app, mock_user_developer
+):
     """protect_app middleware allows authorised users through"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
 
-    mock_user = User.create_mock(groups=["developers"])
+    @fastapi_app.get("/")
+    def index():
+        return {"message": "Success"}
 
     with (
-        patch.dict(
-            os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
+        patch.object(
+            fastapi_auth, "_get_user_from_headers", return_value=mock_user_developer
         ),
+        patch.object(fastapi_auth, "_is_authorised", return_value=True),
     ):
-        app = FastAPI()
-        auth = FastAPIAuth()
+        fastapi_auth.protect_app(fastapi_app)
+        client = TestClient(fastapi_app)
 
-        @app.get("/")
-        def index():
-            return {"message": "Success"}
+        response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
 
-        with (
-            patch.object(auth, "_get_user_from_headers", return_value=mock_user),
-            patch.object(auth, "_is_authorised", return_value=True),
-        ):
-            auth.protect_app(app)
-            client = TestClient(app)
-
-            response = client.get("/", headers={"X-Amzn-Oidc-Data": "token"})
-
-            assert response.status_code == 200
-            assert response.json()["message"] == "Success"
+        assert response.status_code == 200
+        assert response.json()["message"] == "Success"
