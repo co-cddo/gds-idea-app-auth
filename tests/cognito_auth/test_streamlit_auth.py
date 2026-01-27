@@ -4,16 +4,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cognito_auth import Authoriser, User
+from cognito_auth import User
 from cognito_auth.exceptions import ExpiredTokenError, MissingTokenError
 from cognito_auth.streamlit import StreamlitAuth
-
-
-@pytest.fixture(autouse=True)
-def clear_cache_before_test():
-    """Automatically clear config cache before each test"""
-    Authoriser.clear_config_cache()
-    return
 
 
 @pytest.fixture
@@ -27,16 +20,6 @@ def mock_streamlit():
         # Mock st.stop() to raise exception (simulates stopping execution)
         mock_st.stop.side_effect = SystemExit("st.stop() called")
         yield mock_st
-
-
-@pytest.fixture
-def auth_config_file(tmp_path):
-    """Create auth config file"""
-    config_file = tmp_path / "auth-config.json"
-    config_file.write_text(
-        '{"allowed_groups": ["developers"], "allowed_users": [], "require_all": false}'
-    )
-    return config_file
 
 
 @pytest.fixture
@@ -238,9 +221,7 @@ def test_get_auth_user_handles_expired_token_with_no_cache(
         assert "initialization" in mock_streamlit.error.call_args[0][0].lower()
 
 
-def test_get_auth_user_uses_cache_when_headers_expired(
-    mock_streamlit, streamlit_auth
-):
+def test_get_auth_user_uses_cache_when_headers_expired(mock_streamlit, streamlit_auth):
     """get_auth_user falls back to cache when headers present but expired (normal)"""
     # Create mock user with future expiration
     future_exp = datetime.now() + timedelta(hours=1)
