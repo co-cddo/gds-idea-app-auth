@@ -27,7 +27,7 @@ auth.protect_app(app)  # Protects entire app!
 @app.callback(...)
 def my_callback(...):
     user = auth.get_auth_user()
-    return f"Welcome {user.email}!"
+    return f"Welcome {user.name}!"
 ```
 
 ## Configuration
@@ -61,45 +61,15 @@ Since Dash runs on Flask, DashAuth uses Flask's request handling. When authentic
 
 The user is stored in Flask's `g.user` object, making it efficient to call `get_auth_user()` multiple times.
 
+!!! note "Flask support"
+    DashAuth also works with standalone Flask applications. Pass a Flask `app` to `protect_app()` instead of a Dash `app`. See the Flask example below.
+
 ## Development Mode
 
-Enable dev mode for local development without ALB:
+Enable dev mode for local development without ALB. See [Development Mode](../dev-mode.md) for full details.
 
 ```bash
 export COGNITO_AUTH_DEV_MODE=true
-```
-
-When dev mode is enabled and headers are missing, `get_auth_user()` returns a mock user instead of failing.
-
-### Customizing the Mock User
-
-To customize the mock user returned in dev mode, create a `dev-mock-user.json` file in your project root:
-
-```json
-{
-  "email": "developer@example.com",
-  "sub": "12345678-1234-1234-1234-123456789abc",
-  "username": "12345678-1234-1234-1234-123456789abc",
-  "groups": ["developers", "users"]
-}
-```
-
-The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
-
-**Available fields:**
-- `email` - Mock user's email address
-- `sub` - Mock user's Cognito subject (UUID)
-- `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorisation testing
-
-See `dev-mock-user.example.json` in the repository for a complete template with comments.
-
-**Alternative config location:**
-
-You can specify a custom path via environment variable:
-
-```bash
-export COGNITO_AUTH_DEV_CONFIG=/path/to/your/mock-user.json
 ```
 
 ## Complete Example
@@ -107,7 +77,9 @@ export COGNITO_AUTH_DEV_CONFIG=/path/to/your/mock-user.json
 ### Dash Application
 
 ```python
-from dash import Dash, html, dcc
+import json
+
+from dash import Dash, Input, Output, dcc, html
 from cognito_auth.dash import DashAuth
 
 app = Dash(__name__)
@@ -119,17 +91,19 @@ auth.protect_app(app)
 app.layout = html.Div([
     html.H1("Protected Dashboard"),
     html.Div(id="user-info"),
+    # Interval triggers initial load
+    dcc.Interval(id="interval", interval=1000, n_intervals=0, max_intervals=1),
 ])
 
 @app.callback(
     Output("user-info", "children"),
-    Input("some-input", "value")
+    Input("interval", "n_intervals"),
 )
-def display_user_info(value):
+def display_user_info(n):
     user = auth.get_auth_user()
 
     return html.Div([
-        html.P(f"Logged in as: {user.email}"),
+        html.P(f"Logged in as: {user.name} ({user.email})"),
         html.P(f"Admin: {'Yes' if user.is_admin else 'No'}"),
         html.Ul([html.Li(group) for group in user.groups])
     ])
@@ -153,7 +127,7 @@ auth.protect_app(app)
 @app.route("/")
 def index():
     user = auth.get_auth_user()
-    return f"<h1>Welcome {user.email}!</h1>"
+    return f"<h1>Welcome {user.name}!</h1>"
 
 @app.route("/admin")
 def admin():

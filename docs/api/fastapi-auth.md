@@ -26,7 +26,7 @@ auth.protect_app(app)  # Protects entire app!
 
 @app.get("/")
 def index(user: User = Depends(auth.get_auth_user)):
-    return {"message": f"Welcome {user.email}!"}
+    return {"message": f"Welcome {user.name}!"}
 ```
 
 ## Configuration
@@ -61,43 +61,10 @@ The user is stored in `request.state.user`, making it efficient to call `get_aut
 
 ## Development Mode
 
-Enable dev mode for local development without ALB:
+Enable dev mode for local development without ALB. See [Development Mode](../dev-mode.md) for full details.
 
 ```bash
 export COGNITO_AUTH_DEV_MODE=true
-```
-
-When dev mode is enabled and headers are missing, `get_auth_user()` returns a mock user instead of failing.
-
-### Customizing the Mock User
-
-To customize the mock user returned in dev mode, create a `dev-mock-user.json` file in your project root:
-
-```json
-{
-  "email": "developer@example.com",
-  "sub": "12345678-1234-1234-1234-123456789abc",
-  "username": "12345678-1234-1234-1234-123456789abc",
-  "groups": ["developers", "users"]
-}
-```
-
-The mock user will use these values instead of the defaults. This is useful for testing different authorisation scenarios.
-
-**Available fields:**
-- `email` - Mock user's email address
-- `sub` - Mock user's Cognito subject (UUID)
-- `username` - Mock user's username (usually same as sub)
-- `groups` - Mock user's Cognito groups for authorisation testing
-
-See `dev-mock-user.example.json` in the repository for a complete template with comments.
-
-**Alternative config location:**
-
-You can specify a custom path via environment variable:
-
-```bash
-export COGNITO_AUTH_DEV_CONFIG=/path/to/your/mock-user.json
 ```
 
 ## Complete Example
@@ -105,7 +72,7 @@ export COGNITO_AUTH_DEV_CONFIG=/path/to/your/mock-user.json
 ### Protect Entire App (Recommended)
 
 ```python
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from cognito_auth import User
 from cognito_auth.fastapi import FastAPIAuth
 
@@ -118,7 +85,7 @@ auth.protect_app(app)
 @app.get("/")
 def index(user: User = Depends(auth.get_auth_user)):
     return {
-        "message": f"Welcome {user.email}!",
+        "message": f"Welcome {user.name}!",
         "groups": user.groups,
         "is_admin": user.is_admin
     }

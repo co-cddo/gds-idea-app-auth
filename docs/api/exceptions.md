@@ -2,6 +2,28 @@
 
 Custom exceptions raised by cognito-auth.
 
+## AuthenticationError
+
+::: cognito_auth.exceptions.AuthenticationError
+    options:
+      show_root_heading: true
+
+Base exception for all authentication errors. Use this to catch any token-related failure:
+
+```python
+from cognito_auth.exceptions import AuthenticationError
+
+try:
+    user = User(
+        oidc_data_header=token,
+        access_token_header=access_token,
+        region="eu-west-2",
+    )
+except AuthenticationError as e:
+    # Catches InvalidTokenError, ExpiredTokenError, and MissingTokenError
+    print(f"Authentication failed: {e}")
+```
+
 ## InvalidTokenError
 
 ::: cognito_auth.exceptions.InvalidTokenError
@@ -11,6 +33,7 @@ Custom exceptions raised by cognito-auth.
 Raised when a JWT token fails signature verification or is malformed.
 
 **Common causes:**
+
 - Token signature doesn't match public key
 - Token is malformed or corrupted
 - Token was not issued by the expected ALB or Cognito User Pool
@@ -40,6 +63,7 @@ except InvalidTokenError as e:
 Raised when a JWT token has expired.
 
 **Common causes:**
+
 - User's session has timed out
 - Token expiration time (`exp` claim) is in the past
 - System clock skew
@@ -70,6 +94,7 @@ except ExpiredTokenError as e:
 Raised when required Cognito headers are missing from the request.
 
 **Common causes:**
+
 - Application not behind ALB with OIDC authentication enabled
 - Headers not properly forwarded by load balancer
 - Testing without dev mode enabled
@@ -110,9 +135,10 @@ user = auth.get_auth_user()
 ```python
 from cognito_auth import User
 from cognito_auth.exceptions import (
+    AuthenticationError,
     InvalidTokenError,
     ExpiredTokenError,
-    MissingTokenError
+    MissingTokenError,
 )
 
 try:
@@ -130,5 +156,8 @@ except ExpiredTokenError:
     pass
 except InvalidTokenError:
     # Tampered or invalid token
+    pass
+except AuthenticationError:
+    # Catch-all for any authentication failure
     pass
 ```

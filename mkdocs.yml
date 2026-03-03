@@ -1,8 +1,8 @@
 site_name: cognito-auth
 site_description: AWS Cognito authentication for Python web frameworks
 site_author: David Gillespie
-repo_url: https://github.com/your-org/cognito-auth
-repo_name: cognito-auth
+repo_url: https://github.com/co-cddo/gds-idea-app-auth
+repo_name: gds-idea-app-auth
 
 theme:
   name: material
@@ -63,6 +63,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Development Mode: dev-mode.md
   - API Reference:
       - User: api/user.md
       - Authoriser: api/authoriser.md

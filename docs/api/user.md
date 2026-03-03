@@ -13,6 +13,9 @@ The `User` class represents an authenticated user from AWS Cognito via ALB OIDC 
         - username
         - email
         - email_domain
+        - name
+        - given_name
+        - family_name
         - groups
         - is_authenticated
         - is_admin
@@ -34,6 +37,7 @@ from cognito_auth.streamlit import StreamlitAuth
 auth = StreamlitAuth()
 user = auth.get_auth_user()  # User created from request headers
 
+print(f"Name: {user.name}")
 print(f"Email: {user.email}")
 print(f"Groups: {user.groups}")
 print(f"Is Admin: {user.is_admin}")
@@ -52,10 +56,14 @@ user = User.create_mock()
 # With custom values
 user = User.create_mock(
     email="developer@example.com",
-    groups=["developers", "admin"]
+    name="David Gillespie",
+    given_name="David",
+    family_name="Gillespie",
+    groups=["developers", "admin"],
 )
 
 assert user.is_authenticated is True
+assert user.name == "David Gillespie"
 assert "developers" in user.groups
 ```
 
@@ -71,9 +79,12 @@ All user properties are read-only and extracted from the JWT tokens.
 ### Identity Properties
 
 - **`sub`**: User's unique subject identifier (UUID)
-- **`username`**: User's username (typically same as `sub`)
+- **`username`**: User's username (typically a provider-prefixed identifier)
 - **`email`**: User's email address
 - **`email_domain`**: Domain portion of email (e.g., "example.com")
+- **`name`**: User's full display name (e.g., "David Gillespie")
+- **`given_name`**: User's given/first name (e.g., "David")
+- **`family_name`**: User's family/last name (e.g., "Gillespie")
 
 ### Authorisation Properties
 
@@ -84,5 +95,5 @@ All user properties are read-only and extracted from the JWT tokens.
 
 - **`exp`**: Token expiration timestamp
 - **`issuer`**: Token issuer URL
-- **`oidc_claims`**: All claims from ALB OIDC token
-- **`access_claims`**: All claims from Cognito access token
+- **`oidc_claims`**: All claims from ALB OIDC token (dict)
+- **`access_claims`**: All claims from Cognito access token (dict)

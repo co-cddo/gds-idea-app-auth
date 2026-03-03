@@ -91,3 +91,4 @@ dmypy.json
 # Development config (keep examples)
 .cognito-auth-dev.json
 auth-config.json
+site/
