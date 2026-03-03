@@ -104,6 +104,21 @@ class User:
         return ""
 
     @property
+    def name(self) -> str:
+        """User's full name (e.g., 'David Gillespie')"""
+        return self._oidc_claims.get("name", "")
+
+    @property
+    def given_name(self) -> str:
+        """User's given/first name (e.g., 'David')"""
+        return self._oidc_claims.get("given_name", "")
+
+    @property
+    def family_name(self) -> str:
+        """User's family/last name (e.g., 'Gillespie')"""
+        return self._oidc_claims.get("family_name", "")
+
+    @property
     def groups(self) -> list[str]:
         """User's Cognito groups"""
         return self._access_claims.get("cognito:groups", [])
@@ -145,9 +160,7 @@ class User:
         return self._access_claims.copy()
 
     def __repr__(self) -> str:
-        return (
-            f"User(username='{self.username}', email='{self.email}', sub='{self.sub}')"
-        )
+        return f"User(name='{self.name}', email='{self.email}', sub='{self.sub}')"
 
     def __str__(self) -> str:
         return self.email
@@ -160,6 +173,9 @@ class User:
         sub: str | None = None,
         groups: list[str] | None = None,
         email_verified: bool = True,
+        name: str | None = None,
+        given_name: str | None = None,
+        family_name: str | None = None,
         region: str = "eu-west-2",
         **extra_claims: Any,
     ) -> "User":
@@ -176,6 +192,9 @@ class User:
             sub: User's subject identifier (unique ID)
             groups: List of Cognito groups
             email_verified: Whether email is verified
+            name: User's full name (auto-composed from given/family if not set)
+            given_name: User's given/first name
+            family_name: User's family/last name
             region: AWS region
             **extra_claims: Additional claims to include in tokens
 
@@ -210,6 +229,9 @@ class User:
         # In real tokens, username is the same as sub (a UUID)
         username = username or config.get("username", sub)
         groups = groups if groups is not None else config.get("groups", [])
+        given_name = given_name or config.get("given_name", "Dev")
+        family_name = family_name or config.get("family_name", "User")
+        name = name or config.get("name", f"{given_name} {family_name}")
 
         # Build OIDC claims (from ALB header)
         oidc_claims = {
@@ -217,6 +239,9 @@ class User:
             "email": email,
             "username": username,
             "email_verified": email_verified,
+            "name": name,
+            "given_name": given_name,
+            "family_name": family_name,
             "exp": int(time.time()) + 3600,  # Expires in 1 hour
             "iss": f"https://cognito-idp.{region}.amazonaws.com/mock-pool",
             **extra_claims,
@@ -249,7 +274,11 @@ class User:
         instance._is_authenticated = True
 
         logger.info(
-            "Mock user created: email=%s, groups=%s, sub=%s", email, groups, sub
+            "Mock user created: name=%s, email=%s, groups=%s, sub=%s",
+            name,
+            email,
+            groups,
+            sub,
         )
 
         return instance

@@ -252,16 +252,93 @@ def test_user_str_returns_email(suppress_warnings):
 
 
 def test_user_repr_includes_key_fields(suppress_warnings):
-    """__repr__ includes username, email, and sub"""
+    """__repr__ includes name, email, and sub"""
     user = User.create_mock(
         email="test@example.com",
-        username="testuser",
+        name="Test User",
         sub="test-sub",
     )
     repr_str = repr(user)
-    assert "testuser" in repr_str
+    assert "Test User" in repr_str
     assert "test@example.com" in repr_str
     assert "test-sub" in repr_str
+
+
+# Tests for User name properties
+
+
+def test_user_name_property(suppress_warnings):
+    """name returns user's full name"""
+    user = User.create_mock(name="David Gillespie")
+    assert user.name == "David Gillespie"
+
+
+def test_user_given_name_property(suppress_warnings):
+    """given_name returns user's first name"""
+    user = User.create_mock(given_name="David")
+    assert user.given_name == "David"
+
+
+def test_user_family_name_property(suppress_warnings):
+    """family_name returns user's last name"""
+    user = User.create_mock(family_name="Gillespie")
+    assert user.family_name == "Gillespie"
+
+
+def test_user_name_defaults_when_claim_missing(suppress_warnings):
+    """Name properties return empty string when claims are absent"""
+    user = User.create_mock()
+    # Remove name claims to simulate missing OIDC claims
+    user._oidc_claims.pop("name", None)
+    user._oidc_claims.pop("given_name", None)
+    user._oidc_claims.pop("family_name", None)
+
+    assert user.name == ""
+    assert user.given_name == ""
+    assert user.family_name == ""
+
+
+def test_create_mock_name_defaults(suppress_warnings):
+    """Mock user has sensible name defaults"""
+    user = User.create_mock()
+    assert user.given_name == "Dev"
+    assert user.family_name == "User"
+    assert user.name == "Dev User"
+
+
+def test_create_mock_custom_name_fields(suppress_warnings):
+    """Mock user accepts custom name values"""
+    user = User.create_mock(
+        name="David Gillespie",
+        given_name="David",
+        family_name="Gillespie",
+    )
+    assert user.name == "David Gillespie"
+    assert user.given_name == "David"
+    assert user.family_name == "Gillespie"
+
+
+def test_create_mock_name_auto_composed(suppress_warnings):
+    """Mock user auto-composes name from given_name and family_name"""
+    user = User.create_mock(given_name="Jane", family_name="Smith")
+    assert user.name == "Jane Smith"
+
+
+def test_create_mock_name_from_json_config(mock_dev_config, suppress_warnings):
+    """Mock user loads name fields from JSON config"""
+    tmp_path, config = mock_dev_config
+    # Add name fields to the config file
+    config["name"] = "Fixture User"
+    config["given_name"] = "Fixture"
+    config["family_name"] = "User"
+    config_file = tmp_path / "dev-mock-user.json"
+    config_file.write_text(json.dumps(config))
+
+    with patch("cognito_auth.user.Path.cwd", return_value=tmp_path):
+        user = User.create_mock()
+        assert user.name == "Fixture User"
+        assert user.given_name == "Fixture"
+        assert user.family_name == "User"
 
 
 # Tests for User initialization with headers
