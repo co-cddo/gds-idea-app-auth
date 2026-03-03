@@ -221,7 +221,7 @@ def test_is_authorised_allows_user_with_no_authoriser(tmp_path):
         os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}, clear=True
     ):
         auth = BaseAuth()
-        auth.authoriser = None  # Remove authoriser
+        auth._explicit_authoriser = None  # Remove authoriser
 
         user = User.create_mock()
         assert auth._is_authorised(user) is True

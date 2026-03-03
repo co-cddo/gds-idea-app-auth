@@ -8,6 +8,8 @@ import warnings
 from .authoriser import Authoriser
 from .user import User
 
+_UNSET = object()  # Sentinel to distinguish "not provided" from None
+
 
 class BaseAuth:
     """
@@ -22,7 +24,7 @@ class BaseAuth:
 
     def __init__(
         self,
-        authoriser: Authoriser | None = None,
+        authoriser: Authoriser | None = _UNSET,  # type: ignore[assignment]
         redirect_url: str = "https://gds-idea.click/401.html",
         region: str = "eu-west-2",
     ):
@@ -36,7 +38,9 @@ class BaseAuth:
         - COGNITO_AUTH_DEV_MODE: Use mock users (local development)
 
         Args:
-            authoriser: Pre-configured Authoriser. If None, loads from env vars.
+            authoriser: Pre-configured Authoriser. If not provided, loads from
+                env vars with periodic refresh (5 min TTL). Pass None explicitly
+                to disable authorisation.
             redirect_url: Where to redirect on auth failure
             region: AWS region
         """
@@ -58,11 +62,24 @@ class BaseAuth:
                 stacklevel=3,
             )
 
-        # Auto-load from config if not provided
-        if authoriser is None:
-            authoriser = Authoriser.from_config()
+        # Store explicit authoriser if provided. If None, the authoriser
+        # property will delegate to Authoriser.from_config() on each access,
+        # which uses a TTL cache to periodically refresh from the config source.
+        self._explicit_authoriser = authoriser
 
-        self.authoriser = authoriser
+    @property
+    def authoriser(self) -> Authoriser | None:
+        """
+        Return the authoriser, refreshing from config periodically.
+
+        If an explicit authoriser was provided at init, it is always returned.
+        Otherwise, delegates to Authoriser.from_config() which uses a TTL cache
+        (default 5 minutes) to avoid reading from AWS Secrets Manager on every
+        request while still picking up config changes without an app restart.
+        """
+        if self._explicit_authoriser is not _UNSET:
+            return self._explicit_authoriser
+        return Authoriser.from_config()
 
     def _get_header(self, headers: dict, name: str) -> str | None:
         """
