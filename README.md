@@ -4,22 +4,28 @@ Unified authentication and authorisation for AWS Cognito-protected web applicati
 
 ## Installation
 
+Available extras: `streamlit`, `dash`, `fastapi`, `gradio`, `all`
+
 ```bash
-pip install cognito-auth[streamlit]  # or dash, fastapi, gradio, all
+# pip (preferred)
+pip install "cognito-auth[streamlit] @ git+https://github.com/co-cddo/gds-idea-app-auth.git"
+
+# uv
+uv add cognito-auth[streamlit] --git https://github.com/co-cddo/gds-idea-app-auth.git
 ```
 
 ## Quick Start
 
 ```python
-from cognito_auth.streamlit import StreamlitAuth 
+from cognito_auth.streamlit import StreamlitAuth
 
-guard = Auth.from_config()
+auth = StreamlitAuth.from_config()
 user = auth.get_auth_user()
 ```
 
 ## Documentation
 
-Full documentation available at [github pages](https://co-cddo.github.io/gds-idea-app-auth).
+Full documentation available at [co-cddo.github.io/gds-idea-app-auth](https://co-cddo.github.io/gds-idea-app-auth).
 
 ## Contributing
 
@@ -28,7 +34,7 @@ Full documentation available at [github pages](https://co-cddo.github.io/gds-ide
 ```bash
 # Clone and install dependencies
 git clone https://github.com/co-cddo/gds-idea-app-auth/
-cd cognito-auth
+cd gds-idea-app-auth
 uv sync
 ```
 
