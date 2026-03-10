@@ -2,11 +2,14 @@
 Base authentication class with shared logic for all frameworks.
 """
 
+import logging
 import os
 import warnings
 
 from .authoriser import Authoriser
 from .user import User
+
+logger = logging.getLogger(__name__)
 
 _UNSET = object()  # Sentinel to distinguish "not provided" from None
 
@@ -119,6 +122,19 @@ class BaseAuth:
 
     def _is_authorised(self, user: User) -> bool:
         """Check if user passes authorisation rules."""
-        if self.authoriser is not None and not self.authoriser.is_authorised(user):
+        if self.authoriser is None:
+            logger.debug(
+                "Authorisation disabled (no authoriser configured), "
+                "allowing user: email=%s",
+                user.email,
+            )
+            return True
+
+        if not self.authoriser.is_authorised(user):
+            logger.warning(
+                "User denied access: email=%s, groups=%s",
+                user.email,
+                user.groups,
+            )
             return False
         return True

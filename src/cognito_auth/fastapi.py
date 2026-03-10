@@ -2,12 +2,16 @@
 FastAPI authentication module.
 """
 
+import logging
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ._base_auth import BaseAuth
 from .user import User
+
+logger = logging.getLogger(__name__)
 
 
 class FastAPIAuth(BaseAuth):
@@ -77,6 +81,11 @@ class FastAPIAuth(BaseAuth):
                     user = self.auth._get_user_from_headers(headers)
 
                     if not self.auth._is_authorised(user):
+                        logger.warning(
+                            "User not authorised, redirecting: email=%s, groups=%s",
+                            user.email,
+                            user.groups,
+                        )
                         return RedirectResponse(url=self.auth.redirect_url)
 
                     # Store user in request state (FastAPI's equivalent of Flask's g)
@@ -85,6 +94,11 @@ class FastAPIAuth(BaseAuth):
                     return await call_next(request)
 
                 except Exception:
+                    logger.error(
+                        "Authentication failed, redirecting to %s",
+                        self.auth.redirect_url,
+                        exc_info=True,
+                    )
                     return RedirectResponse(url=self.auth.redirect_url)
 
         app.add_middleware(AuthMiddleware, auth_instance=self)
@@ -127,6 +141,11 @@ class FastAPIAuth(BaseAuth):
             user = self._get_user_from_headers(headers)
 
             if not self._is_authorised(user):
+                logger.warning(
+                    "User not authorised: email=%s, groups=%s",
+                    user.email,
+                    user.groups,
+                )
                 raise HTTPException(
                     status_code=403,
                     detail="Access denied. You don't have permission.",
@@ -138,6 +157,7 @@ class FastAPIAuth(BaseAuth):
             # Re-raise HTTPException as-is
             raise
         except Exception as e:
+            logger.error("Authentication failed: %s", e, exc_info=True)
             raise HTTPException(
                 status_code=401,
                 detail="Authentication failed. Unable to verify your identity.",

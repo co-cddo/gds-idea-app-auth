@@ -2,6 +2,8 @@
 Gradio authentication module.
 """
 
+import logging
+
 from fastapi import FastAPI
 from gradio import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -9,6 +11,8 @@ from starlette.responses import RedirectResponse
 
 from ._base_auth import BaseAuth
 from .user import User
+
+logger = logging.getLogger(__name__)
 
 
 class GradioAuth(BaseAuth):
@@ -85,6 +89,11 @@ class GradioAuth(BaseAuth):
                     user = self.auth._get_user_from_headers(headers)
 
                     if not self.auth._is_authorised(user):
+                        logger.warning(
+                            "User not authorised, redirecting: email=%s, groups=%s",
+                            user.email,
+                            user.groups,
+                        )
                         return RedirectResponse(url=self.auth.redirect_url)
 
                     # Store user in request state
@@ -93,6 +102,11 @@ class GradioAuth(BaseAuth):
                     return await call_next(request)
 
                 except Exception:
+                    logger.error(
+                        "Authentication failed, redirecting to %s",
+                        self.auth.redirect_url,
+                        exc_info=True,
+                    )
                     return RedirectResponse(url=self.auth.redirect_url)
 
         app.add_middleware(AuthMiddleware, auth_instance=self)
@@ -135,6 +149,11 @@ class GradioAuth(BaseAuth):
         user = self._get_user_from_headers(headers)
 
         if not self._is_authorised(user):
+            logger.warning(
+                "User not authorised: email=%s, groups=%s",
+                user.email,
+                user.groups,
+            )
             raise PermissionError(
                 "Access denied. You don't have permission to access this resource."
             )
