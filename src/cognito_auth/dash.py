@@ -2,6 +2,7 @@
 Dash and Flask authentication module.
 """
 
+import logging
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -11,6 +12,8 @@ from flask import Flask, g, redirect, request
 
 from ._base_auth import BaseAuth
 from .user import User
+
+logger = logging.getLogger(__name__)
 
 
 class DashAuth(BaseAuth):
@@ -82,12 +85,22 @@ class DashAuth(BaseAuth):
                 user = self._get_user_from_headers(headers)
 
                 if not self._is_authorised(user):
+                    logger.warning(
+                        "User not authorised, redirecting: email=%s, groups=%s",
+                        user.email,
+                        user.groups,
+                    )
                     return redirect(self.redirect_url)
 
                 # Store user in request-scoped g object
                 g.user = user
 
             except Exception:
+                logger.error(
+                    "Authentication failed, redirecting to %s",
+                    self.redirect_url,
+                    exc_info=True,
+                )
                 return redirect(self.redirect_url)
 
     def get_auth_user(self) -> User:
@@ -127,6 +140,11 @@ class DashAuth(BaseAuth):
         user = self._get_user_from_headers(headers)
 
         if not self._is_authorised(user):
+            logger.warning(
+                "User not authorised: email=%s, groups=%s",
+                user.email,
+                user.groups,
+            )
             raise PermissionError(
                 "Access denied. You don't have permission to access this resource."
             )
@@ -161,6 +179,11 @@ class DashAuth(BaseAuth):
                 user = self._get_user_from_headers(headers)
 
                 if not self._is_authorised(user):
+                    logger.warning(
+                        "User not authorised, redirecting: email=%s, groups=%s",
+                        user.email,
+                        user.groups,
+                    )
                     return redirect(self.redirect_url)
 
                 # Store user in g for get_auth_user() to retrieve
@@ -169,6 +192,11 @@ class DashAuth(BaseAuth):
                 return func(*args, **kwargs)
 
             except Exception:
+                logger.error(
+                    "Authentication failed, redirecting to %s",
+                    self.redirect_url,
+                    exc_info=True,
+                )
                 return redirect(self.redirect_url)
 
         return wrapper
