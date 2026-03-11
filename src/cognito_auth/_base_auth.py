@@ -28,7 +28,7 @@ class BaseAuth:
     def __init__(
         self,
         authoriser: Authoriser | None = _UNSET,  # type: ignore[assignment]
-        redirect_url: str = "https://gds-idea.click/401.html",
+        redirect_url: str = "https://gds-idea.io/401.html",
         region: str = "eu-west-2",
     ):
         """
