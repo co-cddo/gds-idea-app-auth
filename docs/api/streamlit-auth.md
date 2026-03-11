@@ -29,7 +29,7 @@ st.write(f"Groups: {', '.join(user.groups)}")
 StreamlitAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authoriser`** (optional): Pre-configured Authoriser instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Not used in Streamlit (defaults to "https://gds-idea.click/401.html")
+- **`redirect_url`** (optional): Not used in Streamlit (defaults to "https://gds-idea.io/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python

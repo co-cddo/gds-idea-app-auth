@@ -7,11 +7,11 @@ Unified authentication and authorisation for AWS Cognito-protected web applicati
 Available extras: `streamlit`, `dash`, `fastapi`, `gradio`, `all`
 
 ```bash
-# pip (preferred)
-pip install "cognito-auth[streamlit] @ git+https://github.com/co-cddo/gds-idea-app-auth.git"
-
-# uv
+# uv (preferred)
 uv add cognito-auth[streamlit] --git https://github.com/co-cddo/gds-idea-app-auth.git
+
+# pip
+pip install "cognito-auth[streamlit] @ git+https://github.com/co-cddo/gds-idea-app-auth.git"
 ```
 
 ## Quick Start
@@ -78,7 +78,7 @@ tests/cognito_auth/      # Test suite
 docs/                    # MkDocs documentation
 ```
 
-See `CLAUDE.md` for detailed architecture and development guidance.
+See `AGENTS.md` for detailed architecture and development guidance.
 
 ## License
 
