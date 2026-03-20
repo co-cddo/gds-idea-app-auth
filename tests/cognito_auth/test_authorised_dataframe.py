@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from cognito_auth import User
-from cognito_auth.df import AuthorisedDataFrame
+from cognito_auth.df import AuthorisedDataFrame, PreparedDataFrame
 
 DOMAIN_MAPPING = {
     "cabinetoffice.gov.uk": ["Cabinet Office"],
@@ -228,28 +228,43 @@ class TestToStore:
 
 
 # ---------------------------------------------------------------------------
-# from_dataframe() tests
+# prepare() + for_user() tests
 # ---------------------------------------------------------------------------
 
 
-class TestFromDataFrame:
-    """Tests for AuthorisedDataFrame.from_dataframe() convenience constructor."""
+class TestPrepare:
+    """Tests for AuthorisedDataFrame.prepare() and PreparedDataFrame.for_user()."""
 
-    def test_produces_same_result_as_presegmented(
-        self, sample_df, segments, cabinet_office_user
-    ):
-        from_segments = AuthorisedDataFrame(
-            segments, cabinet_office_user, DOMAIN_MAPPING
-        )
-        from_df = AuthorisedDataFrame.from_dataframe(
-            sample_df, "department", cabinet_office_user, DOMAIN_MAPPING
-        )
+    def test_prepare_returns_prepared_dataframe(self, sample_df):
+        prepared = AuthorisedDataFrame.prepare(sample_df, "department", DOMAIN_MAPPING)
+        assert isinstance(prepared, PreparedDataFrame)
+
+    def test_for_user_filters_correctly(self, sample_df, segments, cabinet_office_user):
+        """prepare().for_user() gives same result as direct constructor."""
+        prepared = AuthorisedDataFrame.prepare(sample_df, "department", DOMAIN_MAPPING)
+        from_prepare = prepared.for_user(cabinet_office_user)
+        from_direct = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
         pd.testing.assert_frame_equal(
-            from_segments.df.reset_index(drop=True),
-            from_df.df.reset_index(drop=True),
+            from_prepare.df.reset_index(drop=True),
+            from_direct.df.reset_index(drop=True),
         )
 
-    def test_with_different_column_name(self, suppress_warnings):
+    def test_for_user_different_users_different_results(
+        self, sample_df, cabinet_office_user, home_office_user
+    ):
+        prepared = AuthorisedDataFrame.prepare(sample_df, "department", DOMAIN_MAPPING)
+        co = prepared.for_user(cabinet_office_user)
+        ho = prepared.for_user(home_office_user)
+        assert set(co.df["department"]) == {"Cabinet Office"}
+        assert set(ho.df["department"]) == {"Home Office"}
+
+    def test_for_user_unmapped_user(self, sample_df, unmapped_user):
+        prepared = AuthorisedDataFrame.prepare(sample_df, "department", DOMAIN_MAPPING)
+        secure = prepared.for_user(unmapped_user)
+        assert secure.has_access is False
+        assert len(secure.df) == 0
+
+    def test_prepare_with_different_column_name(self, suppress_warnings):
         """Works with any column name, not just 'department'."""
         df = pd.DataFrame(
             {
@@ -257,8 +272,9 @@ class TestFromDataFrame:
                 "value": [10, 20],
             }
         )
+        prepared = AuthorisedDataFrame.prepare(df, "org", DOMAIN_MAPPING)
         user = User.create_mock(email="dev@cabinetoffice.gov.uk", groups=[])
-        secure = AuthorisedDataFrame.from_dataframe(df, "org", user, DOMAIN_MAPPING)
+        secure = prepared.for_user(user)
         assert len(secure.df) == 1
         assert secure.df.iloc[0]["org"] == "Cabinet Office"
 
@@ -272,8 +288,8 @@ class TestDataModelPattern:
     """Tests demonstrating the DataModel usage pattern with multiple DataFrames.
 
     This shows how an app with multiple data sources would use
-    AuthorisedDataFrame -- one wrapper per source DataFrame, same user,
-    same mapping.
+    AuthorisedDataFrame.prepare() -- one prepared source per DataFrame,
+    same user, same mapping.
     """
 
     def test_multiple_dataframes_same_user(self, cabinet_office_user):
@@ -290,15 +306,16 @@ class TestDataModelPattern:
                 "forecast": [150, 250, 350],
             }
         )
-        spending_segments = dict(tuple(spending_df.groupby("department")))
-        forecast_segments = dict(tuple(forecast_df.groupby("department")))
 
-        secure_spending = AuthorisedDataFrame(
-            spending_segments, cabinet_office_user, DOMAIN_MAPPING
+        spending = AuthorisedDataFrame.prepare(
+            spending_df, "department", DOMAIN_MAPPING
         )
-        secure_forecast = AuthorisedDataFrame(
-            forecast_segments, cabinet_office_user, DOMAIN_MAPPING
+        forecasts = AuthorisedDataFrame.prepare(
+            forecast_df, "department", DOMAIN_MAPPING
         )
+
+        secure_spending = spending.for_user(cabinet_office_user)
+        secure_forecast = forecasts.for_user(cabinet_office_user)
 
         assert len(secure_spending.df) == 1
         assert len(secure_forecast.df) == 1
@@ -320,12 +337,11 @@ class TestDataModelPattern:
             }
         )
 
-        secure_short = AuthorisedDataFrame.from_dataframe(
-            df_short, "dept", cabinet_office_user, DOMAIN_MAPPING
-        )
-        secure_long = AuthorisedDataFrame.from_dataframe(
-            df_long, "organisation", cabinet_office_user, DOMAIN_MAPPING
-        )
+        short = AuthorisedDataFrame.prepare(df_short, "dept", DOMAIN_MAPPING)
+        long = AuthorisedDataFrame.prepare(df_long, "organisation", DOMAIN_MAPPING)
+
+        secure_short = short.for_user(cabinet_office_user)
+        secure_long = long.for_user(cabinet_office_user)
 
         assert len(secure_short.df) == 1
         assert len(secure_long.df) == 1

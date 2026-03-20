@@ -8,6 +8,13 @@ based on a User's identity. Requires the [df] extra:
 
 Usage:
     from cognito_auth.df import AuthorisedDataFrame
+
+    # Startup -- segment once
+    spending = AuthorisedDataFrame.prepare(df, "department", DOMAIN_MAPPING)
+
+    # Per request -- filter for the current user
+    secure = spending.for_user(user)
+    secure.df  # only their rows
 """
 
 from __future__ import annotations
@@ -110,33 +117,67 @@ class AuthorisedDataFrame:
         }
 
     @classmethod
-    def from_dataframe(
+    def prepare(
         cls,
         df: pd.DataFrame,
         auth_column: str,
-        user: User,
         domain_mapping: dict[str, list[str]],
-    ) -> AuthorisedDataFrame:
-        """Create from a raw DataFrame by segmenting on a column.
+    ) -> PreparedDataFrame:
+        """Pre-segment a DataFrame for repeated per-user filtering.
 
-        Convenience constructor that segments the DataFrame by
-        ``auth_column`` using ``groupby``, then delegates to the
-        standard constructor.
+        Call this once at app startup to segment the data by
+        ``auth_column``. Then call ``.for_user(user)`` on the result
+        for each request to get a filtered :class:`AuthorisedDataFrame`.
 
-        For better performance with repeated calls, pre-segment once
-        at app startup and use the main constructor directly::
+        Example::
 
-            SEGMENTS = dict(tuple(df.groupby("department")))
-            secure = AuthorisedDataFrame(SEGMENTS, user, mapping)
+            # Startup
+            spending = AuthorisedDataFrame.prepare(df, "department", MAPPING)
+
+            # Per request
+            secure = spending.for_user(user)
+            secure.df  # filtered
 
         Args:
             df: The full unfiltered DataFrame.
-            auth_column: Column name to segment/filter on.
-            user: Authenticated User from cognito_auth.
+            auth_column: Column name to segment on (e.g. ``"department"``).
             domain_mapping: Domain-to-departments mapping dict.
 
         Returns:
-            AuthorisedDataFrame with only the user's authorised rows.
+            A :class:`PreparedDataFrame` ready for ``.for_user()`` calls.
         """
         segments = dict(tuple(df.groupby(auth_column)))
-        return cls(segments, user, domain_mapping)
+        return PreparedDataFrame(segments, domain_mapping)
+
+
+class PreparedDataFrame:
+    """Pre-segmented data ready to be filtered per user.
+
+    Created by :meth:`AuthorisedDataFrame.prepare`. Call
+    :meth:`for_user` to get a filtered :class:`AuthorisedDataFrame`
+    for a specific user.
+
+    Args:
+        segments: Pre-segmented data as ``{department_name: DataFrame}``.
+        domain_mapping: Domain-to-departments mapping dict.
+    """
+
+    def __init__(
+        self,
+        segments: dict[str, pd.DataFrame],
+        domain_mapping: dict[str, list[str]],
+    ) -> None:
+        self._segments = segments
+        self._domain_mapping = domain_mapping
+
+    def for_user(self, user: User) -> AuthorisedDataFrame:
+        """Create a filtered DataFrame for a specific user.
+
+        Args:
+            user: Authenticated User from cognito_auth.
+
+        Returns:
+            :class:`AuthorisedDataFrame` containing only rows the
+            user is authorised to see.
+        """
+        return AuthorisedDataFrame(self._segments, user, self._domain_mapping)
