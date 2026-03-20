@@ -71,4 +71,5 @@ nav:
       - DashAuth: api/dash-auth.md
       - FastAPIAuth: api/fastapi-auth.md
       - GradioAuth: api/gradio-auth.md
+      - LambdaAuth: api/lambda-auth.md
       - Exceptions: api/exceptions.md
