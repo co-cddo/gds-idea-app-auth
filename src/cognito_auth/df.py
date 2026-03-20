@@ -13,7 +13,7 @@ Usage:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -85,3 +85,26 @@ class AuthorisedDataFrame:
         if user.is_admin:
             return sorted({d for depts in mapping.values() for d in depts})
         return mapping.get(user.email_domain)
+
+    def to_store(self) -> dict[str, Any]:
+        """Serialise for Dash ``dcc.Store`` -- filtered data + user context.
+
+        Returns a dict suitable for writing directly to a ``dcc.Store``
+        component. Downstream render callbacks can read from the store
+        without needing access to auth or the raw data.
+
+        Returns:
+            Dict with keys:
+                - ``records``: list of row dicts (empty if no access)
+                - ``user_name``: user's display name
+                - ``user_email``: user's email address
+                - ``departments``: list of authorised department names
+                - ``has_access``: whether the user has a department mapping
+        """
+        return {
+            "records": self.df.to_dict("records") if self.has_access else [],
+            "user_name": self.user.name,
+            "user_email": self.user.email,
+            "departments": self.departments,
+            "has_access": self.has_access,
+        }

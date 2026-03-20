@@ -180,3 +180,48 @@ class TestFiltering:
         secure = AuthorisedDataFrame(segments, user, DOMAIN_MAPPING)
         assert len(secure.df) == 0
         assert secure.has_access is True  # they have access, just no data
+
+
+# ---------------------------------------------------------------------------
+# to_store() tests
+# ---------------------------------------------------------------------------
+
+
+class TestToStore:
+    """Tests for AuthorisedDataFrame.to_store() serialisation."""
+
+    def test_returns_correct_keys(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        store = secure.to_store()
+        assert set(store.keys()) == {
+            "records",
+            "user_name",
+            "user_email",
+            "departments",
+            "has_access",
+        }
+
+    def test_records_match_filtered_data(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        store = secure.to_store()
+        assert store["records"] == secure.df.to_dict("records")
+        assert len(store["records"]) == 2
+
+    def test_includes_user_context(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        store = secure.to_store()
+        assert store["user_name"] == cabinet_office_user.name
+        assert store["user_email"] == cabinet_office_user.email
+        assert store["departments"] == ["Cabinet Office"]
+        assert store["has_access"] is True
+
+    def test_no_access_returns_empty_records(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        store = secure.to_store()
+        assert store["records"] == []
+
+    def test_no_access_has_access_false(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        store = secure.to_store()
+        assert store["has_access"] is False
+        assert store["departments"] is None
