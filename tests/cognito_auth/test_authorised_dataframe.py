@@ -2,6 +2,7 @@
 
 import warnings
 
+import pandas as pd
 import pytest
 
 from cognito_auth import User
@@ -41,6 +42,27 @@ def admin_user(suppress_warnings):
 @pytest.fixture
 def unmapped_user(suppress_warnings):
     return User.create_mock(email="someone@unknown.gov.uk", groups=[])
+
+
+@pytest.fixture
+def sample_df():
+    return pd.DataFrame(
+        {
+            "department": [
+                "Cabinet Office",
+                "Cabinet Office",
+                "Home Office",
+                "HMRC",
+            ],
+            "project": ["Project A", "Project B", "Project C", "Project D"],
+            "budget": [100, 200, 300, 400],
+        }
+    )
+
+
+@pytest.fixture
+def segments(sample_df):
+    return dict(tuple(sample_df.groupby("department")))
 
 
 # ---------------------------------------------------------------------------
@@ -89,3 +111,72 @@ class TestResolve:
     def test_admin_with_empty_mapping_returns_empty_list(self, admin_user):
         result = AuthorisedDataFrame._resolve(admin_user, {})
         assert result == []
+
+
+# ---------------------------------------------------------------------------
+# __init__ / filtering tests
+# ---------------------------------------------------------------------------
+
+
+class TestFiltering:
+    """Tests for AuthorisedDataFrame construction and row-level filtering."""
+
+    def test_single_department_user_sees_only_their_rows(
+        self, segments, cabinet_office_user
+    ):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        assert len(secure.df) == 2
+        assert set(secure.df["department"]) == {"Cabinet Office"}
+
+    def test_different_department_user_sees_different_rows(
+        self, segments, home_office_user
+    ):
+        secure = AuthorisedDataFrame(segments, home_office_user, DOMAIN_MAPPING)
+        assert len(secure.df) == 1
+        assert set(secure.df["department"]) == {"Home Office"}
+
+    def test_admin_sees_all_rows(self, segments, admin_user):
+        secure = AuthorisedDataFrame(segments, admin_user, DOMAIN_MAPPING)
+        assert len(secure.df) == 4
+
+    def test_unmapped_user_gets_empty_dataframe(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        assert len(secure.df) == 0
+
+    def test_unmapped_user_preserves_columns(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        assert list(secure.df.columns) == ["department", "project", "budget"]
+
+    def test_has_access_true_for_mapped_user(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        assert secure.has_access is True
+
+    def test_has_access_false_for_unmapped_user(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        assert secure.has_access is False
+
+    def test_user_property_returns_original_user(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        assert secure.user is cabinet_office_user
+
+    def test_departments_property(self, segments, cabinet_office_user):
+        secure = AuthorisedDataFrame(segments, cabinet_office_user, DOMAIN_MAPPING)
+        assert secure.departments == ["Cabinet Office"]
+
+    def test_departments_none_for_unmapped_user(self, segments, unmapped_user):
+        secure = AuthorisedDataFrame(segments, unmapped_user, DOMAIN_MAPPING)
+        assert secure.departments is None
+
+    def test_empty_segments_returns_empty_dataframe(self, cabinet_office_user):
+        secure = AuthorisedDataFrame({}, cabinet_office_user, DOMAIN_MAPPING)
+        assert len(secure.df) == 0
+
+    def test_department_not_in_segments(self, suppress_warnings):
+        """User maps to a department that has no rows in the data."""
+        segments = {
+            "Home Office": pd.DataFrame({"department": ["Home Office"], "x": [1]}),
+        }
+        user = User.create_mock(email="dev@hmrc.gov.uk", groups=[])
+        secure = AuthorisedDataFrame(segments, user, DOMAIN_MAPPING)
+        assert len(secure.df) == 0
+        assert secure.has_access is True  # they have access, just no data
