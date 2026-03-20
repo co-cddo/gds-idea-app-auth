@@ -179,3 +179,85 @@ def test_protect_app_allows_authorised_user(
 
         assert response.status_code == 200
         assert response.json()["message"] == "Success"
+
+
+# Tests for protect_app() bypass
+
+
+def test_protect_app_bypass_skips_auth(fastapi_auth, fastapi_app):
+    """protect_app bypass allows requests through without authentication"""
+
+    @fastapi_app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    @fastapi_app.get("/")
+    def index():
+        return {"message": "Protected"}
+
+    fastapi_auth.protect_app(fastapi_app, bypass={"/health"})
+    client = TestClient(fastapi_app)
+
+    # Bypass path should work without any auth headers
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
+def test_protect_app_bypass_handles_trailing_slash(fastapi_auth, fastapi_app):
+    """protect_app bypass matches paths regardless of trailing slash"""
+
+    @fastapi_app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    fastapi_auth.protect_app(fastapi_app, bypass={"/health"})
+    client = TestClient(fastapi_app)
+
+    # Request with trailing slash should also bypass auth
+    response = client.get("/health/", follow_redirects=False)
+    assert response.status_code in (200, 307)
+    # If 307, it should redirect to /health (not the auth redirect)
+    if response.status_code == 307:
+        assert fastapi_auth.redirect_url not in response.headers["location"]
+
+
+def test_protect_app_non_bypass_path_still_requires_auth(fastapi_auth, fastapi_app):
+    """protect_app still requires auth on paths not in bypass set"""
+
+    @fastapi_app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    @fastapi_app.get("/")
+    def index():
+        return {"message": "Protected"}
+
+    fastapi_auth.protect_app(fastapi_app, bypass={"/health"})
+    client = TestClient(fastapi_app)
+
+    # Non-bypass path without auth headers should redirect
+    response = client.get("/", follow_redirects=False)
+    assert response.status_code == 307
+    assert fastapi_auth.redirect_url in response.headers["location"]
+
+
+def test_protect_app_bypass_multiple_paths(fastapi_auth, fastapi_app):
+    """protect_app bypass works with multiple paths"""
+
+    @fastapi_app.get("/health")
+    def health():
+        return {"status": "ok"}
+
+    @fastapi_app.get("/ready")
+    def ready():
+        return {"status": "ready"}
+
+    fastapi_auth.protect_app(fastapi_app, bypass={"/health", "/ready"})
+    client = TestClient(fastapi_app)
+
+    response_health = client.get("/health")
+    assert response_health.status_code == 200
+
+    response_ready = client.get("/ready")
+    assert response_ready.status_code == 200

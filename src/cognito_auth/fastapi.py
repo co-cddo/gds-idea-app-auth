@@ -26,11 +26,15 @@ class FastAPIAuth(BaseAuth):
 
         app = FastAPI()
         auth = FastAPIAuth()
-        auth.protect_app(app)  # Protects entire app!
+        auth.protect_app(app, bypass={"/health"})  # Protects entire app except /health!
 
         @app.get("/")
         def index(user: User = Depends(auth.get_auth_user)):
             return {"message": f"Welcome {user.email}!"}
+
+        @app.get("/health")
+        def health():
+            return {"status": "ok"}
 
     Example (Alternative - protect specific routes):
         from fastapi import FastAPI, Depends
@@ -48,7 +52,7 @@ class FastAPIAuth(BaseAuth):
             return {"message": f"Welcome {user.email}!"}
     """
 
-    def protect_app(self, app: FastAPI) -> None:
+    def protect_app(self, app: FastAPI, bypass: set[str] | None = None) -> None:
         """
         Protect the entire application with authentication.
 
@@ -58,16 +62,24 @@ class FastAPIAuth(BaseAuth):
 
         Args:
             app: FastAPI application instance
+            bypass: Optional set of paths that skip authentication
+                (e.g. {"/health", "/ready"}). Trailing slashes are ignored
+                when matching, so "/health" will also match "/health/".
 
         Example:
             app = FastAPI()
             auth = FastAPIAuth()
-            auth.protect_app(app)  # One line protects everything!
+            auth.protect_app(app, bypass={"/health"})
 
             @app.get("/")
             def index(user: User = Depends(auth.get_auth_user)):
                 return {"message": f"Welcome {user.email}!"}
+
+            @app.get("/health")
+            def health():
+                return {"status": "ok"}
         """
+        bypass_paths = {p.rstrip("/") or "/" for p in bypass} if bypass else set()
 
         class AuthMiddleware(BaseHTTPMiddleware):
             def __init__(self, app, auth_instance):
@@ -76,6 +88,10 @@ class FastAPIAuth(BaseAuth):
 
             async def dispatch(self, request: Request, call_next):
                 """Validate authentication before every request."""
+                path = request.url.path.rstrip("/") or "/"
+                if path in bypass_paths:
+                    return await call_next(request)
+
                 try:
                     headers = dict(request.headers)
                     user = self.auth._get_user_from_headers(headers)

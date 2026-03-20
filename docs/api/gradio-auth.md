@@ -38,7 +38,7 @@ from cognito_auth.gradio import GradioAuth
 
 app = FastAPI()
 auth = GradioAuth()
-auth.protect_app(app)  # Protects entire app!
+auth.protect_app(app, bypass={"/health"})  # Protects entire app!
 
 def greet(name: str, request: gr.Request):
     user = auth.get_auth_user(request)
@@ -82,6 +82,7 @@ GradioAuth works in two modes:
 
 - Middleware redirects to `redirect_url` before Gradio functions execute
 - User stored in `request.state.user` for efficiency
+- Use the `bypass` parameter to exclude paths like health checks (e.g. `bypass={"/health"}`)
 
 ## Development Mode
 
@@ -134,7 +135,7 @@ app = FastAPI()
 
 # Initialize and protect entire app
 auth = GradioAuth()
-auth.protect_app(app)
+auth.protect_app(app, bypass={"/health"})
 
 def greet(name: str, request: gr.Request):
     user = auth.get_auth_user(request)
