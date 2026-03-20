@@ -32,6 +32,7 @@ src/cognito_auth/
 ├── dash.py              # DashAuth
 ├── fastapi.py           # FastAPIAuth
 ├── gradio.py            # GradioAuth
+├── lambda_auth.py       # LambdaAuth (ALB Lambda integration)
 └── exceptions.py        # InvalidTokenError, ExpiredTokenError
 ```
 
