@@ -15,6 +15,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 if TYPE_CHECKING:
     from cognito_auth.user import User
 
@@ -40,6 +42,31 @@ class AuthorisedDataFrame:
         has_access: Whether the user has any department mapping.
         df: The filtered DataFrame. Only contains authorised rows.
     """
+
+    def __init__(
+        self,
+        segments: dict[str, pd.DataFrame],
+        user: User,
+        domain_mapping: dict[str, list[str]],
+    ) -> None:
+        self.user = user
+        self.departments = self._resolve(user, domain_mapping)
+        self.has_access = self.departments is not None
+
+        if not self.has_access or not self.departments:
+            # Get columns from the first segment if available, else empty
+            sample = next(iter(segments.values()), pd.DataFrame())
+            self.df = pd.DataFrame(columns=sample.columns)
+            return
+
+        matching = [segments[d] for d in self.departments if d in segments]
+        if not matching:
+            sample = next(iter(segments.values()), pd.DataFrame())
+            self.df = pd.DataFrame(columns=sample.columns)
+        elif len(matching) == 1:
+            self.df = matching[0]
+        else:
+            self.df = pd.concat(matching, ignore_index=True)
 
     @staticmethod
     def _resolve(user: User, mapping: dict[str, list[str]]) -> list[str] | None:
