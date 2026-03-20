@@ -22,11 +22,15 @@ app = FastAPI()
 
 # Auto-loads from environment variables
 auth = FastAPIAuth()
-auth.protect_app(app)  # Protects entire app!
+auth.protect_app(app, bypass={"/health"})  # Protects entire app except /health!
 
 @app.get("/")
 def index(user: User = Depends(auth.get_auth_user)):
     return {"message": f"Welcome {user.name}!"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 ```
 
 ## Configuration
@@ -34,7 +38,7 @@ def index(user: User = Depends(auth.get_auth_user)):
 FastAPIAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authoriser`** (optional): Pre-configured Authoriser instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.io/401.html")
+- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://public.gds-idea.io/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
@@ -54,7 +58,7 @@ auth = FastAPIAuth(
 
 FastAPIAuth uses dependency injection with `Depends()`. When authentication or authorisation fails:
 
-- **With `protect_app()`**: Middleware redirects to `redirect_url` before any route executes
+- **With `protect_app()`**: Middleware redirects to `redirect_url` before any route executes. Use the `bypass` parameter to exclude paths like health checks (e.g. `bypass={"/health"}`).
 - **Without `protect_app()`**: Routes with `Depends(auth.get_auth_user)` raise `HTTPException` (401 for auth failure, 403 for unauthorised)
 
 The user is stored in `request.state.user`, making it efficient to call `get_auth_user()` multiple times.
@@ -80,7 +84,11 @@ app = FastAPI()
 
 # Initialize and protect entire app
 auth = FastAPIAuth()
-auth.protect_app(app)
+auth.protect_app(app, bypass={"/health"})
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.get("/")
 def index(user: User = Depends(auth.get_auth_user)):

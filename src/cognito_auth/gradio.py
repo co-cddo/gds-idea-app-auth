@@ -41,7 +41,7 @@ class GradioAuth(BaseAuth):
 
         app = FastAPI()
         auth = GradioAuth()
-        auth.protect_app(app)  # Protect entire app!
+        auth.protect_app(app, bypass={"/health"})  # Protect entire app!
 
         def greet(name: str, request: gr.Request):
             user = auth.get_auth_user(request)
@@ -51,7 +51,7 @@ class GradioAuth(BaseAuth):
         app = gr.mount_gradio_app(app, demo, path="/")
     """
 
-    def protect_app(self, app: FastAPI) -> None:
+    def protect_app(self, app: FastAPI, bypass: set[str] | None = None) -> None:
         """
         Protect a FastAPI app that has Gradio mounted on it.
 
@@ -63,11 +63,14 @@ class GradioAuth(BaseAuth):
 
         Args:
             app: FastAPI application instance (before mounting Gradio)
+            bypass: Optional set of paths that skip authentication
+                (e.g. {"/health", "/ready"}). Trailing slashes are ignored
+                when matching, so "/health" will also match "/health/".
 
         Example:
             app = FastAPI()
             auth = GradioAuth()
-            auth.protect_app(app)
+            auth.protect_app(app, bypass={"/health"})
 
             def greet(name: str, request: gr.Request):
                 user = auth.get_auth_user(request)
@@ -76,6 +79,7 @@ class GradioAuth(BaseAuth):
             demo = gr.Interface(greet, "text", "text")
             app = gr.mount_gradio_app(app, demo, path="/")
         """
+        bypass_paths = {p.rstrip("/") or "/" for p in bypass} if bypass else set()
 
         class AuthMiddleware(BaseHTTPMiddleware):
             def __init__(self, app, auth_instance):
@@ -84,6 +88,10 @@ class GradioAuth(BaseAuth):
 
             async def dispatch(self, request, call_next):
                 """Validate authentication before every request."""
+                path = request.url.path.rstrip("/") or "/"
+                if path in bypass_paths:
+                    return await call_next(request)
+
                 try:
                     headers = dict(request.headers)
                     user = self.auth._get_user_from_headers(headers)

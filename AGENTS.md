@@ -37,7 +37,7 @@ src/cognito_auth/
 
 ## Key Architecture
 
-- **Auth flow**: ALB adds OIDC headers -> framework auth class extracts headers -> `User` created with token verification -> `Authoriser` checks rules -> user returned or redirect to `redirect_url` (default: `https://gds-idea.io/401.html`)
+- **Auth flow**: ALB adds OIDC headers -> framework auth class extracts headers -> `User` created with token verification -> `Authoriser` checks rules -> user returned or redirect to `redirect_url` (default: `https://public.gds-idea.io/401.html`)
 - **Authoriser**: `require_all=False` = OR logic (any rule passes), `require_all=True` = AND logic (all must pass). Custom rules implement `AuthorisationRule` protocol.
 - **Config loading**: `from_config()` factory auto-detects `COGNITO_AUTH_CONFIG_PATH` (local JSON) or `COGNITO_AUTH_SECRET_NAME` (AWS Secrets Manager). Config is cached with 5-min TTL.
 - **Dev mode**: Set `COGNITO_AUTH_DEV_MODE=true` to bypass auth with mock users locally. Never enable in production.

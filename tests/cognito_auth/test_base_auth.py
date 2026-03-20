@@ -66,7 +66,7 @@ def test_init_sets_default_config(tmp_path):
     ):
         auth = BaseAuth()
         assert auth.region == "eu-west-2"
-        assert auth.redirect_url == "https://gds-idea.io/401.html"
+        assert auth.redirect_url == "https://public.gds-idea.io/401.html"
 
 
 def test_init_accepts_custom_config(tmp_path):
