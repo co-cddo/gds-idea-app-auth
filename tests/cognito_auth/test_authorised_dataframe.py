@@ -261,3 +261,73 @@ class TestFromDataFrame:
         secure = AuthorisedDataFrame.from_dataframe(df, "org", user, DOMAIN_MAPPING)
         assert len(secure.df) == 1
         assert secure.df.iloc[0]["org"] == "Cabinet Office"
+
+
+# ---------------------------------------------------------------------------
+# DataModel pattern tests
+# ---------------------------------------------------------------------------
+
+
+class TestDataModelPattern:
+    """Tests demonstrating the DataModel usage pattern with multiple DataFrames.
+
+    This shows how an app with multiple data sources would use
+    AuthorisedDataFrame -- one wrapper per source DataFrame, same user,
+    same mapping.
+    """
+
+    def test_multiple_dataframes_same_user(self, cabinet_office_user):
+        """Two DataFrames filtered for the same user."""
+        spending_df = pd.DataFrame(
+            {
+                "department": ["Cabinet Office", "Home Office"],
+                "budget": [100, 200],
+            }
+        )
+        forecast_df = pd.DataFrame(
+            {
+                "department": ["Cabinet Office", "Home Office", "HMRC"],
+                "forecast": [150, 250, 350],
+            }
+        )
+        spending_segments = dict(tuple(spending_df.groupby("department")))
+        forecast_segments = dict(tuple(forecast_df.groupby("department")))
+
+        secure_spending = AuthorisedDataFrame(
+            spending_segments, cabinet_office_user, DOMAIN_MAPPING
+        )
+        secure_forecast = AuthorisedDataFrame(
+            forecast_segments, cabinet_office_user, DOMAIN_MAPPING
+        )
+
+        assert len(secure_spending.df) == 1
+        assert len(secure_forecast.df) == 1
+        assert secure_spending.df.iloc[0]["budget"] == 100
+        assert secure_forecast.df.iloc[0]["forecast"] == 150
+
+    def test_different_auth_columns(self, cabinet_office_user):
+        """DataFrames can use different column names for department."""
+        df_short = pd.DataFrame(
+            {
+                "dept": ["Cabinet Office", "Home Office"],
+                "x": [1, 2],
+            }
+        )
+        df_long = pd.DataFrame(
+            {
+                "organisation": ["Cabinet Office", "HMRC"],
+                "y": [3, 4],
+            }
+        )
+
+        secure_short = AuthorisedDataFrame.from_dataframe(
+            df_short, "dept", cabinet_office_user, DOMAIN_MAPPING
+        )
+        secure_long = AuthorisedDataFrame.from_dataframe(
+            df_long, "organisation", cabinet_office_user, DOMAIN_MAPPING
+        )
+
+        assert len(secure_short.df) == 1
+        assert len(secure_long.df) == 1
+        assert secure_short.df.iloc[0]["x"] == 1
+        assert secure_long.df.iloc[0]["y"] == 3
