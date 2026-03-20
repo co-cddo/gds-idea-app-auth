@@ -8,8 +8,15 @@ Row-level security for pandas DataFrames.
       show_source: true
       members:
         - __init__
-        - from_dataframe
+        - prepare
         - to_store
+
+::: cognito_auth.df.PreparedDataFrame
+    options:
+      show_root_heading: true
+      show_source: true
+      members:
+        - for_user
 
 ## Installation
 
@@ -25,26 +32,27 @@ pip install cognito-auth[dash,df]
 ## Quick Start
 
 ```python
+import pandas as pd
 from cognito_auth.dash import DashAuth
 from cognito_auth.df import AuthorisedDataFrame
 
 auth = DashAuth()
 auth.protect_app(app)
 
-# Pre-segment your data once at startup
-df = pd.read_csv("data/spending.csv")
-SEGMENTS = dict(tuple(df.groupby("department")))
-
 DOMAIN_MAPPING = {
     "cabinetoffice.gov.uk": ["Cabinet Office"],
     "homeoffice.gov.uk": ["Home Office"],
     "hmrc.gov.uk": ["HMRC"],
 }
+
+# Startup -- prepare once, segment the data by department
+df = pd.read_csv("data/spending.csv")
+spending = AuthorisedDataFrame.prepare(df, "department", DOMAIN_MAPPING)
 ```
 
 ## Simple: Single DataFrame
 
-The most straightforward usage -- one DataFrame, one callback, filtered by user:
+One DataFrame, one callback, filtered by user:
 
 ```python
 @app.callback(
@@ -53,7 +61,7 @@ The most straightforward usage -- one DataFrame, one callback, filtered by user:
 )
 def filter_and_store(_n):
     user = auth.get_auth_user()
-    secure = AuthorisedDataFrame(SEGMENTS, user, DOMAIN_MAPPING)
+    secure = spending.for_user(user)
 
     if not secure.has_access:
         return None
@@ -76,60 +84,57 @@ def render_table(data):
 
 ## DataModel: Multiple DataFrames
 
-For apps with multiple data sources, create one `AuthorisedDataFrame` per source:
+For apps with multiple data sources, prepare each one at startup:
 
 ```python
 class DashboardDataModel:
     def __init__(self, spending_df, forecast_df, domain_mapping):
-        self._spending_segments = dict(tuple(spending_df.groupby("department")))
-        self._forecast_segments = dict(tuple(forecast_df.groupby("department")))
-        self._mapping = domain_mapping
-
-    def secure_spending(self, user):
-        return AuthorisedDataFrame(
-            self._spending_segments, user, self._mapping
+        self.spending = AuthorisedDataFrame.prepare(
+            spending_df, "department", domain_mapping
         )
-
-    def secure_forecasts(self, user):
-        return AuthorisedDataFrame(
-            self._forecast_segments, user, self._mapping
+        self.forecasts = AuthorisedDataFrame.prepare(
+            forecast_df, "department", domain_mapping
         )
 ```
+
+Then in a callback, call `.for_user()` on each:
 
 ```python
 @app.callback(...)
 def filter_and_store(_n):
     user = auth.get_auth_user()
-    spending = data_model.secure_spending(user)
-    forecasts = data_model.secure_forecasts(user)
 
-    if not spending.has_access:
+    secure_spending = data_model.spending.for_user(user)
+    secure_forecasts = data_model.forecasts.for_user(user)
+
+    if not secure_spending.has_access:
         return None
 
     return {
-        "spending": spending.df.to_dict("records"),
-        "forecasts": forecasts.df.to_dict("records"),
+        "spending": secure_spending.df.to_dict("records"),
+        "forecasts": secure_forecasts.df.to_dict("records"),
     }
 ```
 
-## Convenience: from_dataframe()
-
-If you don't want to pre-segment, use `from_dataframe()` which segments on the fly:
+DataFrames can use different column names -- just specify the column in `prepare()`:
 
 ```python
-secure = AuthorisedDataFrame.from_dataframe(
-    df, "department", user, DOMAIN_MAPPING
+# One dataset uses "department", another uses "OrganisationSubmitter"
+self.assessments = AuthorisedDataFrame.prepare(
+    assessments_df, "department", domain_mapping
+)
+self.spend = AuthorisedDataFrame.prepare(
+    spend_df, "OrganisationSubmitter", domain_mapping
 )
 ```
 
-!!! tip "Pre-segment for performance"
-    For apps with repeated calls (e.g. multiple callbacks), pre-segment once at startup and use the main constructor. `from_dataframe()` re-segments on every call.
-
 ## How It Works
 
-1. **User resolution**: The user's `email_domain` is looked up in the `domain_mapping` dict. Admin users (`user.is_admin`) get access to all departments.
-2. **Segment lookup**: The matching department DataFrames are retrieved via dict lookup -- O(1) per department, no full DataFrame scan.
-3. **Filtered `.df`**: The resulting `.df` property contains only the authorised rows. There is no way to access unfiltered data through the wrapper.
+1. **`prepare()`**: Segments the DataFrame by the auth column using `groupby` -- this happens once at startup.
+2. **`for_user()`**: Resolves the user's `email_domain` to departments via the mapping, then picks the matching segments via dict lookup -- O(1) per department.
+3. **`.df`**: The resulting DataFrame contains only authorised rows. There is no way to access unfiltered data through the wrapper.
+
+Admin users (`user.is_admin`) automatically get access to all departments in the mapping.
 
 ## Domain Mapping
 
