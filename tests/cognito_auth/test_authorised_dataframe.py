@@ -225,3 +225,39 @@ class TestToStore:
         store = secure.to_store()
         assert store["has_access"] is False
         assert store["departments"] is None
+
+
+# ---------------------------------------------------------------------------
+# from_dataframe() tests
+# ---------------------------------------------------------------------------
+
+
+class TestFromDataFrame:
+    """Tests for AuthorisedDataFrame.from_dataframe() convenience constructor."""
+
+    def test_produces_same_result_as_presegmented(
+        self, sample_df, segments, cabinet_office_user
+    ):
+        from_segments = AuthorisedDataFrame(
+            segments, cabinet_office_user, DOMAIN_MAPPING
+        )
+        from_df = AuthorisedDataFrame.from_dataframe(
+            sample_df, "department", cabinet_office_user, DOMAIN_MAPPING
+        )
+        pd.testing.assert_frame_equal(
+            from_segments.df.reset_index(drop=True),
+            from_df.df.reset_index(drop=True),
+        )
+
+    def test_with_different_column_name(self, suppress_warnings):
+        """Works with any column name, not just 'department'."""
+        df = pd.DataFrame(
+            {
+                "org": ["Cabinet Office", "Home Office"],
+                "value": [10, 20],
+            }
+        )
+        user = User.create_mock(email="dev@cabinetoffice.gov.uk", groups=[])
+        secure = AuthorisedDataFrame.from_dataframe(df, "org", user, DOMAIN_MAPPING)
+        assert len(secure.df) == 1
+        assert secure.df.iloc[0]["org"] == "Cabinet Office"
