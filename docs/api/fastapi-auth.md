@@ -38,7 +38,7 @@ def health():
 FastAPIAuth inherits from BaseAuth and accepts these parameters:
 
 - **`authoriser`** (optional): Pre-configured Authoriser instance. If not provided, auto-loads from environment variables
-- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://gds-idea.io/401.html")
+- **`redirect_url`** (optional): Where to redirect unauthorised users (default: "https://public.gds-idea.io/401.html")
 - **`region`** (optional): AWS region (default: "eu-west-2")
 
 ```python
