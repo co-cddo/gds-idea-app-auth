@@ -108,3 +108,35 @@ class AuthorisedDataFrame:
             "departments": self.departments,
             "has_access": self.has_access,
         }
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        auth_column: str,
+        user: User,
+        domain_mapping: dict[str, list[str]],
+    ) -> AuthorisedDataFrame:
+        """Create from a raw DataFrame by segmenting on a column.
+
+        Convenience constructor that segments the DataFrame by
+        ``auth_column`` using ``groupby``, then delegates to the
+        standard constructor.
+
+        For better performance with repeated calls, pre-segment once
+        at app startup and use the main constructor directly::
+
+            SEGMENTS = dict(tuple(df.groupby("department")))
+            secure = AuthorisedDataFrame(SEGMENTS, user, mapping)
+
+        Args:
+            df: The full unfiltered DataFrame.
+            auth_column: Column name to segment/filter on.
+            user: Authenticated User from cognito_auth.
+            domain_mapping: Domain-to-departments mapping dict.
+
+        Returns:
+            AuthorisedDataFrame with only the user's authorised rows.
+        """
+        segments = dict(tuple(df.groupby(auth_column)))
+        return cls(segments, user, domain_mapping)
