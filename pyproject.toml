@@ -1,6 +1,6 @@
 [project]
 name = "cognito-auth"
-version = "0.3.1"
+version = "0.4.0"
 description = "Unified authentication and authorisation for AWS Cognito-protected web applications across multiple frameworks"
 readme = "README.md"
 authors = [
@@ -21,12 +21,14 @@ streamlit = ["streamlit>=1.0.0"]
 dash = ["dash>=2.0.0", "flask>=2.0.0"]
 fastapi = ["fastapi>=0.100.0"]
 gradio = ["gradio>=4.0.0"]
+df = ["pandas>=2.2.0"]
 all = [
     "streamlit>=1.0.0",
     "dash>=2.0.0",
     "flask>=2.0.0",
     "fastapi>=0.100.0",
     "gradio>=4.0.0",
+    "pandas>=2.2.0",
 ]
 
 [build-system]
@@ -41,6 +43,7 @@ dev = [
     "mkdocs>=1.6.0",
     "mkdocs-material>=9.5.0",
     "mkdocstrings[python]>=0.26.0",
+    "pandas>=2.2.0",
 ]
 
 [tool.pytest.ini_options]
