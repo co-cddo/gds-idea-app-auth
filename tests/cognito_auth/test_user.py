@@ -214,6 +214,38 @@ def test_user_is_admin_empty_groups(suppress_warnings):
     assert user.is_admin is False
 
 
+def test_user_is_admin_true_for_app_admin(suppress_warnings):
+    """is_admin returns True when user is an app admin"""
+    user = User.create_mock(groups=["dsit"])
+    user.is_app_admin = True
+    assert user.is_admin is True
+
+
+def test_user_is_gds_idea_true(suppress_warnings):
+    """is_gds_idea returns True when user is in gds-idea group"""
+    user = User.create_mock(groups=["gds-idea", "users"])
+    assert user.is_gds_idea is True
+
+
+def test_user_is_gds_idea_false(suppress_warnings):
+    """is_gds_idea returns False when user is not in gds-idea group"""
+    user = User.create_mock(groups=["developers"])
+    assert user.is_gds_idea is False
+
+
+def test_user_is_app_admin_defaults_false(suppress_warnings):
+    """is_app_admin defaults to False"""
+    user = User.create_mock(groups=["developers"])
+    assert user.is_app_admin is False
+
+
+def test_user_is_app_admin_settable(suppress_warnings):
+    """is_app_admin can be set to True"""
+    user = User.create_mock(groups=["developers"])
+    user.is_app_admin = True
+    assert user.is_app_admin is True
+
+
 def test_user_exp_in_future(suppress_warnings):
     """Expiration is in the future"""
     user = User.create_mock()

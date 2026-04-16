@@ -69,6 +69,7 @@ class User:
             self._access_claims = jwt.get_unverified_claims(access_token_header)
 
         self._is_authenticated = True
+        self._is_app_admin = False
 
         logger.info(
             "User authenticated: email=%s, groups=%s, sub=%s",
@@ -128,9 +129,23 @@ class User:
         return group in self.groups
 
     @property
-    def is_admin(self) -> bool:
-        """Whether the user is an admin (member of gds-idea group)"""
+    def is_gds_idea(self) -> bool:
+        """Platform-level admin: member of gds-idea group."""
         return "gds-idea" in self.groups
+
+    @property
+    def is_app_admin(self) -> bool:
+        """App-level admin: set by Authoriser from admin_groups/admin_users config."""
+        return self._is_app_admin
+
+    @is_app_admin.setter
+    def is_app_admin(self, value: bool) -> None:
+        self._is_app_admin = value
+
+    @property
+    def is_admin(self) -> bool:
+        """Whether the user has admin privileges (platform or app-level)."""
+        return self.is_gds_idea or self.is_app_admin
 
     @property
     def email_verified(self) -> bool:
@@ -276,6 +291,7 @@ class User:
         instance._oidc_claims = oidc_claims
         instance._access_claims = access_claims
         instance._is_authenticated = True
+        instance._is_app_admin = False
 
         logger.info(
             "Mock user created: name=%s, email=%s, groups=%s, sub=%s",
