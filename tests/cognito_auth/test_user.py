@@ -178,6 +178,24 @@ def test_user_groups_populated(suppress_warnings):
     assert user.groups == ["admin", "users", "developers"]
 
 
+def test_user_is_in_returns_true(suppress_warnings):
+    """is_in returns True when user belongs to group"""
+    user = User.create_mock(groups=["developers", "users"])
+    assert user.is_in("developers") is True
+
+
+def test_user_is_in_returns_false(suppress_warnings):
+    """is_in returns False when user does not belong to group"""
+    user = User.create_mock(groups=["developers", "users"])
+    assert user.is_in("admins") is False
+
+
+def test_user_is_in_empty_groups(suppress_warnings):
+    """is_in returns False when user has no groups"""
+    user = User.create_mock(groups=[])
+    assert user.is_in("developers") is False
+
+
 def test_user_is_admin_true(suppress_warnings):
     """is_admin returns True when user is in gds-idea group"""
     user = User.create_mock(groups=["gds-idea", "users"])
@@ -194,6 +212,38 @@ def test_user_is_admin_empty_groups(suppress_warnings):
     """is_admin returns False when groups is empty"""
     user = User.create_mock(groups=[])
     assert user.is_admin is False
+
+
+def test_user_is_admin_true_for_app_admin(suppress_warnings):
+    """is_admin returns True when user is an app admin"""
+    user = User.create_mock(groups=["dsit"])
+    user.is_app_admin = True
+    assert user.is_admin is True
+
+
+def test_user_is_gds_idea_true(suppress_warnings):
+    """is_gds_idea returns True when user is in gds-idea group"""
+    user = User.create_mock(groups=["gds-idea", "users"])
+    assert user.is_gds_idea is True
+
+
+def test_user_is_gds_idea_false(suppress_warnings):
+    """is_gds_idea returns False when user is not in gds-idea group"""
+    user = User.create_mock(groups=["developers"])
+    assert user.is_gds_idea is False
+
+
+def test_user_is_app_admin_defaults_false(suppress_warnings):
+    """is_app_admin defaults to False"""
+    user = User.create_mock(groups=["developers"])
+    assert user.is_app_admin is False
+
+
+def test_user_is_app_admin_settable(suppress_warnings):
+    """is_app_admin can be set to True"""
+    user = User.create_mock(groups=["developers"])
+    user.is_app_admin = True
+    assert user.is_app_admin is True
 
 
 def test_user_exp_in_future(suppress_warnings):

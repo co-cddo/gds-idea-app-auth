@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cognito_auth import Authoriser, User
-from cognito_auth.authoriser import EmailRule, GroupRule
+from cognito_auth.authoriser import AuthConfig, EmailRule, GroupRule
 
 
 @pytest.fixture
@@ -340,6 +340,156 @@ def test_authoriser_denies_unauthenticated_user(suppress_warnings):
     assert authoriser.is_authorised(user) is False
 
 
+# Tests for AuthConfig admin fields
+
+
+def test_auth_config_accepts_admin_groups():
+    """AuthConfig accepts admin_groups field"""
+    config = AuthConfig(
+        allowed_groups=["developers"],
+        admin_groups=["dsit"],
+    )
+    assert config.admin_groups == ["dsit"]
+
+
+def test_auth_config_accepts_admin_users():
+    """AuthConfig accepts admin_users with valid emails"""
+    config = AuthConfig(
+        allowed_groups=["developers"],
+        admin_users=["alice@cabinetoffice.gov.uk"],
+    )
+    assert config.admin_users == ["alice@cabinetoffice.gov.uk"]
+
+
+def test_auth_config_admin_users_validates_emails():
+    """AuthConfig validates admin_users as email addresses"""
+    with pytest.raises(Exception, match="email"):
+        AuthConfig(
+            allowed_groups=["developers"],
+            admin_users=["not-an-email"],
+        )
+
+
+def test_auth_config_admin_fields_default_none():
+    """AuthConfig admin fields default to None"""
+    config = AuthConfig(allowed_groups=["developers"])
+    assert config.admin_groups is None
+    assert config.admin_users is None
+
+
+def test_auth_config_still_requires_access_rules():
+    """AuthConfig requires allowed_groups or allowed_users even with admin fields"""
+    with pytest.raises(ValueError, match="at least one of"):
+        AuthConfig(admin_groups=["dsit"])
+
+
+# Tests for Authoriser app-admin support
+
+
+def test_authoriser_admin_by_group_bypasses_rules(suppress_warnings):
+    """User in admin_groups is authorised and marked as app admin"""
+    user = User.create_mock(email="alice@example.com", groups=["dsit"])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_groups=["dsit"],
+    )
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is True
+
+
+def test_authoriser_admin_by_email_bypasses_rules(suppress_warnings):
+    """User in admin_users is authorised and marked as app admin"""
+    user = User.create_mock(email="alice@cabinetoffice.gov.uk", groups=[])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_users=["alice@cabinetoffice.gov.uk"],
+    )
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is True
+
+
+def test_authoriser_admin_email_case_insensitive(suppress_warnings):
+    """Admin email matching is case-insensitive"""
+    user = User.create_mock(email="Alice@CabinetOffice.gov.uk", groups=[])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_users=["alice@cabinetoffice.gov.uk"],
+    )
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is True
+
+
+def test_authoriser_non_admin_evaluated_normally(suppress_warnings):
+    """Non-admin user is evaluated against normal rules"""
+    user = User.create_mock(email="bob@example.com", groups=["co"])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_groups=["dsit"],
+    )
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is False
+
+
+def test_authoriser_non_admin_denied_by_rules(suppress_warnings):
+    """Non-admin user denied when rules don't match"""
+    user = User.create_mock(email="bob@example.com", groups=["hmrc"])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_groups=["dsit"],
+    )
+    assert authoriser.is_authorised(user) is False
+    assert user.is_app_admin is False
+
+
+def test_authoriser_admin_not_in_allowed_groups_still_passes(suppress_warnings):
+    """Admin user passes even if not in allowed_groups"""
+    user = User.create_mock(email="alice@example.com", groups=["dsit"])
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co", "hmrc"],
+        admin_groups=["dsit"],
+    )
+    # dsit is not in allowed_groups, but user is an admin
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is True
+
+
+def test_authoriser_no_admin_config_works_normally(suppress_warnings):
+    """Authoriser without admin config works as before"""
+    user = User.create_mock(email="bob@example.com", groups=["co"])
+    authoriser = Authoriser.from_lists(allowed_groups=["co"])
+    assert authoriser.is_authorised(user) is True
+    assert user.is_app_admin is False
+
+
+def test_authoriser_unauthenticated_admin_denied(suppress_warnings):
+    """Unauthenticated user denied even if in admin_groups"""
+    user = User.create_mock(email="alice@example.com", groups=["dsit"])
+    user._is_authenticated = False
+    authoriser = Authoriser.from_lists(
+        allowed_groups=["co"],
+        admin_groups=["dsit"],
+    )
+    assert authoriser.is_authorised(user) is False
+
+
+def test_authoriser_gds_idea_bypasses_rules(suppress_warnings):
+    """Platform admin (gds-idea) bypasses access rules without being listed"""
+    user = User.create_mock(email="platform@example.com", groups=["gds-idea"])
+    authoriser = Authoriser.from_lists(allowed_groups=["co", "hmrc"])
+    # gds-idea is not in allowed_groups, but user bypasses rules
+    assert authoriser.is_authorised(user) is True
+    assert user.is_gds_idea is True
+    assert user.is_app_admin is False
+
+
+def test_authoriser_gds_idea_unauthenticated_denied(suppress_warnings):
+    """Unauthenticated gds-idea user is still denied"""
+    user = User.create_mock(email="platform@example.com", groups=["gds-idea"])
+    user._is_authenticated = False
+    authoriser = Authoriser.from_lists(allowed_groups=["co"])
+    assert authoriser.is_authorised(user) is False
+
+
 # Tests for Authoriser.from_config()
 
 
@@ -479,10 +629,38 @@ def test_from_config_respects_require_all(tmp_path):
             }
         )
     )
-
     with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
         authoriser = Authoriser.from_config()
         assert authoriser.require_all is True
+
+
+def test_from_config_loads_admin_fields(tmp_path, suppress_warnings):
+    """from_config loads admin_groups and admin_users from file"""
+    config_file = tmp_path / "auth-config.json"
+    config_file.write_text(
+        json.dumps(
+            {
+                "allowed_groups": ["co", "hmrc"],
+                "admin_groups": ["dsit"],
+                "admin_users": ["alice@cabinetoffice.gov.uk"],
+            }
+        )
+    )
+
+    with patch.dict(os.environ, {"COGNITO_AUTH_CONFIG_PATH": str(config_file)}):
+        authoriser = Authoriser.from_config()
+        assert authoriser.admin_groups == {"dsit"}
+        assert authoriser.admin_users == {"alice@cabinetoffice.gov.uk"}
+
+        # Verify admin bypass works end-to-end
+        admin_user = User.create_mock(email="alice@cabinetoffice.gov.uk", groups=[])
+        assert authoriser.is_authorised(admin_user) is True
+        assert admin_user.is_app_admin is True
+
+        # Verify normal user still evaluated by rules
+        normal_user = User.create_mock(email="bob@example.com", groups=["co"])
+        assert authoriser.is_authorised(normal_user) is True
+        assert normal_user.is_app_admin is False
 
 
 # Tests for TTL caching

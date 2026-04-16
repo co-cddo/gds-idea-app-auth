@@ -313,7 +313,7 @@ wheels = [
 
 [[package]]
 name = "cognito-auth"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
@@ -329,11 +329,15 @@ all = [
     { name = "fastapi" },
     { name = "flask" },
     { name = "gradio" },
+    { name = "pandas" },
     { name = "streamlit" },
 ]
 dash = [
     { name = "dash" },
     { name = "flask" },
+]
+df = [
+    { name = "pandas" },
 ]
 fastapi = [
     { name = "fastapi" },
@@ -350,6 +354,7 @@ dev = [
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "pandas" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -367,6 +372,8 @@ requires-dist = [
     { name = "flask", marker = "extra == 'dash'", specifier = ">=2.0.0" },
     { name = "gradio", marker = "extra == 'all'", specifier = ">=4.0.0" },
     { name = "gradio", marker = "extra == 'gradio'", specifier = ">=4.0.0" },
+    { name = "pandas", marker = "extra == 'all'", specifier = ">=2.2.0" },
+    { name = "pandas", marker = "extra == 'df'", specifier = ">=2.2.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.0.0" },
     { name = "python-jose", specifier = ">=3.5.0" },
     { name = "requests", specifier = ">=2.32.5" },
@@ -379,6 +386,7 @@ dev = [
     { name = "mkdocs", specifier = ">=1.6.0" },
     { name = "mkdocs-material", specifier = ">=9.5.0" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.26.0" },
+    { name = "pandas", specifier = ">=2.2.0" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "ruff", specifier = ">=0.13.3" },

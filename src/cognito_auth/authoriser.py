@@ -27,8 +27,10 @@ class AuthConfig(BaseModel):
     allowed_groups: list[str] | None = None
     allowed_users: list[str] | None = None
     require_all: bool = False
+    admin_groups: list[str] | None = None
+    admin_users: list[str] | None = None
 
-    @field_validator("allowed_users")
+    @field_validator("allowed_users", "admin_users")
     @classmethod
     def validate_emails(cls, v):
         """Validate that all users are valid email addresses."""
@@ -98,14 +100,34 @@ class EmailRule:
 class Authoriser:
     """Handles authorisation logic using composable rules"""
 
-    def __init__(self, rules: list[AuthorisationRule], require_all: bool = False):
+    def __init__(
+        self,
+        rules: list[AuthorisationRule],
+        require_all: bool = False,
+        admin_groups: set[str] | None = None,
+        admin_users: set[str] | None = None,
+    ):
         """
         Args:
             rules: List of authorisation rules
             require_all: If True, ALL rules must pass. If False, ANY rule can pass.
+            admin_groups: Cognito groups that grant app-admin status
+            admin_users: Email addresses that grant app-admin status
         """
         self.rules = rules
         self.require_all = require_all
+        self.admin_groups = admin_groups
+        self.admin_users = {e.lower() for e in admin_users} if admin_users else None
+
+    def _is_app_admin(self, user: User) -> bool:
+        """Check if user matches admin_groups or admin_users (OR logic)."""
+        if self.admin_groups:
+            user_groups = set(user.access_claims.get("cognito:groups", []))
+            if user_groups & self.admin_groups:
+                return True
+        if self.admin_users and user.email.lower() in self.admin_users:
+            return True
+        return False
 
     def is_authorised(self, user: User) -> bool:
         """Check if user is authorised"""
@@ -118,6 +140,17 @@ class Authoriser:
         if not user.is_authenticated:
             logger.warning("User not authenticated, denying access")
             return False
+
+        # App admins bypass access rules
+        if self._is_app_admin(user):
+            user.is_app_admin = True
+            logger.info("User is app admin, granting access: email=%s", user.email)
+            return True
+
+        # Platform admins bypass access rules
+        if user.is_gds_idea:
+            logger.info("User is platform admin, granting access: email=%s", user.email)
+            return True
 
         if not self.rules:
             logger.debug("No rules configured, allowing all authenticated users")
@@ -148,6 +181,8 @@ class Authoriser:
         allowed_groups: list[str] | None = None,
         allowed_users: list[str] | None = None,
         require_all: bool = False,
+        admin_groups: list[str] | None = None,
+        admin_users: list[str] | None = None,
     ) -> "Authoriser":
         """
         Create an Authoriser from simple lists of allowed values.
@@ -156,6 +191,8 @@ class Authoriser:
             allowed_groups: List of allowed Cognito groups
             allowed_users: List of allowed email addresses
             require_all: If True, ALL rules must pass. If False, ANY rule passes.
+            admin_groups: Cognito groups that grant app-admin status
+            admin_users: Email addresses that grant app-admin status
 
         Returns:
             Authoriser instance with the specified rules
@@ -168,7 +205,12 @@ class Authoriser:
         if allowed_users:
             rules.append(EmailRule(set(allowed_users)))
 
-        return cls(rules, require_all=require_all)
+        return cls(
+            rules,
+            require_all=require_all,
+            admin_groups=set(admin_groups) if admin_groups else None,
+            admin_users=set(admin_users) if admin_users else None,
+        )
 
     @classmethod
     @cached(cache=_config_cache)
@@ -238,16 +280,20 @@ class Authoriser:
 
         logger.info(
             "Authoriser config loaded: allowed_groups=%s, "
-            "allowed_users=%s, require_all=%s",
+            "allowed_users=%s, require_all=%s, admin_groups=%s, admin_users=%s",
             config.allowed_groups,
             len(config.allowed_users) if config.allowed_users else 0,
             config.require_all,
+            config.admin_groups,
+            len(config.admin_users) if config.admin_users else 0,
         )
 
         return cls.from_lists(
             allowed_groups=config.allowed_groups,
             allowed_users=config.allowed_users,
             require_all=config.require_all,
+            admin_groups=config.admin_groups,
+            admin_users=config.admin_users,
         )
 
     @staticmethod
