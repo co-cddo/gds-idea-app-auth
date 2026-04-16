@@ -147,6 +147,11 @@ class Authoriser:
             logger.info("User is app admin, granting access: email=%s", user.email)
             return True
 
+        # Platform admins bypass access rules
+        if user.is_gds_idea:
+            logger.info("User is platform admin, granting access: email=%s", user.email)
+            return True
+
         if not self.rules:
             logger.debug("No rules configured, allowing all authenticated users")
             return True  # No rules = allow all authenticated users

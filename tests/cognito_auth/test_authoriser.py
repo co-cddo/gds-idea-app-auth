@@ -472,6 +472,24 @@ def test_authoriser_unauthenticated_admin_denied(suppress_warnings):
     assert authoriser.is_authorised(user) is False
 
 
+def test_authoriser_gds_idea_bypasses_rules(suppress_warnings):
+    """Platform admin (gds-idea) bypasses access rules without being listed"""
+    user = User.create_mock(email="platform@example.com", groups=["gds-idea"])
+    authoriser = Authoriser.from_lists(allowed_groups=["co", "hmrc"])
+    # gds-idea is not in allowed_groups, but user bypasses rules
+    assert authoriser.is_authorised(user) is True
+    assert user.is_gds_idea is True
+    assert user.is_app_admin is False
+
+
+def test_authoriser_gds_idea_unauthenticated_denied(suppress_warnings):
+    """Unauthenticated gds-idea user is still denied"""
+    user = User.create_mock(email="platform@example.com", groups=["gds-idea"])
+    user._is_authenticated = False
+    authoriser = Authoriser.from_lists(allowed_groups=["co"])
+    assert authoriser.is_authorised(user) is False
+
+
 # Tests for Authoriser.from_config()
 
 
