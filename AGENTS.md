@@ -28,6 +28,7 @@ src/cognito_auth/
 ├── token_verifier.py    # JWT verification (ALB ES256, Cognito RS256)
 ├── authoriser.py        # Composable authorisation rules (GroupRule, EmailRule)
 ├── _base_auth.py        # Base auth class with shared logic
+├── df.py                # AuthorisedDataFrame (row-level security for DataFrames)
 ├── streamlit.py         # StreamlitAuth
 ├── dash.py              # DashAuth
 ├── fastapi.py           # FastAPIAuth

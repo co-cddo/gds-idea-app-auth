@@ -67,6 +67,7 @@ nav:
   - API Reference:
       - User: api/user.md
       - Authoriser: api/authoriser.md
+      - AuthorisedDataFrame: api/authorised-dataframe.md
       - StreamlitAuth: api/streamlit-auth.md
       - DashAuth: api/dash-auth.md
       - FastAPIAuth: api/fastapi-auth.md
