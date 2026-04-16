@@ -123,6 +123,10 @@ class User:
         """User's Cognito groups"""
         return self._access_claims.get("cognito:groups", [])
 
+    def is_in(self, group: str) -> bool:
+        """Whether the user belongs to the given Cognito group."""
+        return group in self.groups
+
     @property
     def is_admin(self) -> bool:
         """Whether the user is an admin (member of gds-idea group)"""

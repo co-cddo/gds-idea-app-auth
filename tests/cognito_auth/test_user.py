@@ -178,6 +178,24 @@ def test_user_groups_populated(suppress_warnings):
     assert user.groups == ["admin", "users", "developers"]
 
 
+def test_user_is_in_returns_true(suppress_warnings):
+    """is_in returns True when user belongs to group"""
+    user = User.create_mock(groups=["developers", "users"])
+    assert user.is_in("developers") is True
+
+
+def test_user_is_in_returns_false(suppress_warnings):
+    """is_in returns False when user does not belong to group"""
+    user = User.create_mock(groups=["developers", "users"])
+    assert user.is_in("admins") is False
+
+
+def test_user_is_in_empty_groups(suppress_warnings):
+    """is_in returns False when user has no groups"""
+    user = User.create_mock(groups=[])
+    assert user.is_in("developers") is False
+
+
 def test_user_is_admin_true(suppress_warnings):
     """is_admin returns True when user is in gds-idea group"""
     user = User.create_mock(groups=["gds-idea", "users"])
