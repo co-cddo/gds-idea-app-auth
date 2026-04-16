@@ -144,9 +144,7 @@ class Authoriser:
         # App admins bypass access rules
         if self._is_app_admin(user):
             user.is_app_admin = True
-            logger.info(
-                "User is app admin, granting access: email=%s", user.email
-            )
+            logger.info("User is app admin, granting access: email=%s", user.email)
             return True
 
         if not self.rules:

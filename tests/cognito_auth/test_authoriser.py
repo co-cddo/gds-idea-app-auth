@@ -378,7 +378,7 @@ def test_auth_config_admin_fields_default_none():
 
 
 def test_auth_config_still_requires_access_rules():
-    """AuthConfig still requires allowed_groups or allowed_users even with admin fields"""
+    """AuthConfig requires allowed_groups or allowed_users even with admin fields"""
     with pytest.raises(ValueError, match="at least one of"):
         AuthConfig(admin_groups=["dsit"])
 
