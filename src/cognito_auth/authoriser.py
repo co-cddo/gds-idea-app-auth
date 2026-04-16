@@ -27,8 +27,10 @@ class AuthConfig(BaseModel):
     allowed_groups: list[str] | None = None
     allowed_users: list[str] | None = None
     require_all: bool = False
+    admin_groups: list[str] | None = None
+    admin_users: list[str] | None = None
 
-    @field_validator("allowed_users")
+    @field_validator("allowed_users", "admin_users")
     @classmethod
     def validate_emails(cls, v):
         """Validate that all users are valid email addresses."""

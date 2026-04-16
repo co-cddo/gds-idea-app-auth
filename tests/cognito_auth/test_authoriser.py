@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cognito_auth import Authoriser, User
-from cognito_auth.authoriser import EmailRule, GroupRule
+from cognito_auth.authoriser import AuthConfig, EmailRule, GroupRule
 
 
 @pytest.fixture
@@ -338,6 +338,49 @@ def test_authoriser_denies_unauthenticated_user(suppress_warnings):
 
     authoriser = Authoriser.from_lists(allowed_groups=["developers"])
     assert authoriser.is_authorised(user) is False
+
+
+# Tests for AuthConfig admin fields
+
+
+def test_auth_config_accepts_admin_groups():
+    """AuthConfig accepts admin_groups field"""
+    config = AuthConfig(
+        allowed_groups=["developers"],
+        admin_groups=["dsit"],
+    )
+    assert config.admin_groups == ["dsit"]
+
+
+def test_auth_config_accepts_admin_users():
+    """AuthConfig accepts admin_users with valid emails"""
+    config = AuthConfig(
+        allowed_groups=["developers"],
+        admin_users=["alice@cabinetoffice.gov.uk"],
+    )
+    assert config.admin_users == ["alice@cabinetoffice.gov.uk"]
+
+
+def test_auth_config_admin_users_validates_emails():
+    """AuthConfig validates admin_users as email addresses"""
+    with pytest.raises(Exception, match="email"):
+        AuthConfig(
+            allowed_groups=["developers"],
+            admin_users=["not-an-email"],
+        )
+
+
+def test_auth_config_admin_fields_default_none():
+    """AuthConfig admin fields default to None"""
+    config = AuthConfig(allowed_groups=["developers"])
+    assert config.admin_groups is None
+    assert config.admin_users is None
+
+
+def test_auth_config_still_requires_access_rules():
+    """AuthConfig still requires allowed_groups or allowed_users even with admin fields"""
+    with pytest.raises(ValueError, match="at least one of"):
+        AuthConfig(admin_groups=["dsit"])
 
 
 # Tests for Authoriser.from_config()
