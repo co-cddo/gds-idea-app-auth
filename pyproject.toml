@@ -9,25 +9,25 @@ license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
     "python-jose>=3.5.0",
-    "requests>=2.32.5",
-    "boto3>=1.35.0",
+    "requests>=2.34.2",
+    "boto3>=1.43.31",
     "pydantic[email]>=2.0.0",
     "cachetools>=6.2.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-streamlit = ["streamlit>=1.0.0"]
-dash = ["dash>=2.0.0", "flask>=2.0.0"]
-fastapi = ["fastapi>=0.100.0"]
-gradio = ["gradio>=4.0.0"]
+streamlit = ["streamlit>=1.58.0"]
+dash = ["dash>=4.2.0", "flask>=2.0.0"]
+fastapi = ["fastapi>=0.137.1"]
+gradio = ["gradio>=6.18.0"]
 df = ["pandas>=2.2.0"]
 all = [
-    "streamlit>=1.0.0",
-    "dash>=2.0.0",
+    "streamlit>=1.58.0",
+    "dash>=4.2.0",
     "flask>=2.0.0",
-    "fastapi>=0.100.0",
-    "gradio>=4.0.0",
+    "fastapi>=0.137.1",
+    "gradio>=6.18.0",
     "pandas>=2.2.0",
 ]
 
@@ -37,11 +37,11 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.0",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.14.0",
+    "pytest>=9.1.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.17",
     "mkdocs>=1.6.0",
-    "mkdocs-material>=9.5.0",
+    "mkdocs-material>=9.7.6",
     "mkdocstrings[python]>=0.26.0",
     "pandas>=2.2.0",
     "pre-commit>=4.6.0",
