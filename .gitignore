@@ -92,3 +92,10 @@ dmypy.json
 .cognito-auth-dev.json
 auth-config.json
 site/
+
+# Added by idea-app adopt
+.pyright/
+.envrc
+**/.DS_Store
+src/*/_version.py
+*.new
