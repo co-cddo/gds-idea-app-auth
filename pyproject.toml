@@ -20,14 +20,14 @@ dynamic = ["version"]
 streamlit = ["streamlit>=1.0.0"]
 dash = ["dash>=2.0.0", "flask>=2.0.0"]
 fastapi = ["fastapi>=0.100.0"]
-gradio = ["gradio>=4.0.0"]
+gradio = ["gradio>=6.15.1"]
 df = ["pandas>=2.2.0"]
 all = [
     "streamlit>=1.0.0",
     "dash>=2.0.0",
     "flask>=2.0.0",
     "fastapi>=0.100.0",
-    "gradio>=4.0.0",
+    "gradio>=6.15.1",
     "pandas>=2.2.0",
 ]
 
