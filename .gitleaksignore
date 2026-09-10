@@ -1,0 +1,2 @@
+# Pre-existing mock JWT token in test fixtures (not a real secret)
+6b4e33222c23748e1b25e8e031eb1292b60d9dbf:tests/cognito_auth/test_lambda_auth.py:generic-api-key:138

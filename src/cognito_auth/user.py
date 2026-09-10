@@ -9,10 +9,12 @@ from typing import Any
 
 from jose import jwt
 
+from ._logging import ThrottledLogger
 from .exceptions import MissingTokenError
 from .token_verifier import TokenVerifier
 
 logger = logging.getLogger(__name__)
+_throttled = ThrottledLogger(logger)
 
 
 class User:
@@ -71,7 +73,8 @@ class User:
         self._is_authenticated = True
         self._is_app_admin = False
 
-        logger.info(
+        _throttled.info(
+            self._oidc_claims.get("sub", "unknown"),
             "User authenticated: email=%s, groups=%s, sub=%s",
             self._oidc_claims.get("email", "N/A"),
             self._access_claims.get("cognito:groups", []),

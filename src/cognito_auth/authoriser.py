@@ -13,9 +13,11 @@ from pydantic import (
     model_validator,
 )
 
+from ._logging import ThrottledLogger
 from .user import User
 
 logger = logging.getLogger(__name__)
+_throttled = ThrottledLogger(logger)
 
 # TTL cache for config loading - 5 minutes
 _config_cache = TTLCache(maxsize=1, ttl=300)
@@ -144,12 +146,20 @@ class Authoriser:
         # App admins bypass access rules
         if self._is_app_admin(user):
             user.is_app_admin = True
-            logger.info("User is app admin, granting access: email=%s", user.email)
+            _throttled.info(
+                user.email,
+                "User is app admin, granting access: email=%s",
+                user.email,
+            )
             return True
 
         # Platform admins bypass access rules
         if user.is_gds_idea:
-            logger.info("User is platform admin, granting access: email=%s", user.email)
+            _throttled.info(
+                user.email,
+                "User is platform admin, granting access: email=%s",
+                user.email,
+            )
             return True
 
         if not self.rules:
@@ -167,7 +177,12 @@ class Authoriser:
             authorised = any(results)
 
         if authorised:
-            logger.info("User authorised: email=%s, groups=%s", user.email, user.groups)
+            _throttled.info(
+                user.email,
+                "User authorised: email=%s, groups=%s",
+                user.email,
+                user.groups,
+            )
         else:
             logger.warning(
                 "User denied access: email=%s, groups=%s", user.email, user.groups
