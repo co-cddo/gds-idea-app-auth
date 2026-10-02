@@ -72,6 +72,26 @@ For production, `COGNITO_AUTH_SECRET_NAME` should be the name of a secret in AWS
 
 See [Authoriser](api/authoriser.md) for advanced configuration (custom rules, AND/OR logic, caching).
 
+### Pinning Your User Pool and ALB (recommended for production)
+
+A valid signature only proves a token was signed by *some* key. To trust it, cognito-auth also needs to know it came from **your** user pool and **your** load balancer. Set these environment variables:
+
+```bash
+export COGNITO_AUTH_USER_POOL_ID=eu-west-2_AbCdEfGhI        # access token issuer must be this pool
+export COGNITO_AUTH_CLIENT_IDS=1abc2defg3hijk               # optional; comma-separated app client IDs
+export COGNITO_AUTH_ALB_ARNS=arn:aws:elasticloadbalancing:eu-west-2:123456789012:loadbalancer/app/my-alb/0123456789abcdef
+```
+
+| Variable | Checks |
+|---|---|
+| `COGNITO_AUTH_USER_POOL_ID` | The access token's `iss` must be exactly this pool. |
+| `COGNITO_AUTH_CLIENT_IDS` | The access token's `client_id` must be one of these. |
+| `COGNITO_AUTH_ALB_ARNS` | The `signer` in the `x-amzn-oidc-data` header must be one of these ALBs. |
+
+The same values can be passed to `TokenVerifier(...)` as `user_pool_id`, `client_ids` and `alb_arns`.
+
+Without them, two checks still always apply: the access token must be a Cognito **access** token (`token_use == "access"`), and its issuer must be a Cognito user pool host (`https://cognito-idp.<region>.amazonaws.com/<pool>`). The issuer is checked *before* any signing keys are downloaded, so a token can't make the library fetch keys from a URL of its choosing. However, **any** user pool and **any** AWS load balancer is then accepted, so anyone who can reach your app directly (bypassing your ALB) could present a self-signed identity. A warning is logged once per process when the pool or ALB is not pinned.
+
 ## Quick Start
 
 Your auth class handles both authentication (token verification) and authorisation (rule checking) automatically. You don't need to configure the `Authoriser` separately -- it loads from the config above.
@@ -171,7 +191,7 @@ User object --> Your code
 ```
 
 1. **AWS ALB** authenticates users via Cognito and adds OIDC headers to every request
-2. **cognito-auth** validates the JWT tokens (signature + expiry) and extracts user information
+2. **cognito-auth** validates the JWT tokens (signature, expiry, issuer, token type and, if configured, user pool / client / ALB) and extracts user information
 3. **Authorisation rules** from your config are checked (groups, emails, AND/OR logic)
 4. Your app receives an authenticated `User` object with name, email, groups, etc.
 
